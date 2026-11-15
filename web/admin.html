@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f2ec">
+  <meta name="description" content="西邮有问管理端：学校资料、校园通知、举报处理与 AI 密钥配置。">
+  <title>西邮有问 · 管理端</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%2316406f'/%3E%3Ctext x='32' y='44' font-size='33' text-anchor='middle' fill='%23fbf7ec' font-family='serif'%3E%E9%82%AE%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body class="admin-body">
+  <header class="admin-topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">邮</div>
+      <div class="brand-text">
+        <h1>西邮有问 <span class="admin-mark">管理端</span></h1>
+        <p>资料、通知、举报与 AI 配置</p>
+      </div>
+    </div>
+    <a class="ghost-btn" id="backToStudentTop" href="/">返回学生端</a>
+  </header>
+
+  <main class="auth-wrap" id="authView">
+    <section class="auth-card">
+      <p class="eyebrow" id="authEyebrow">维护者入口</p>
+      <h1 id="authTitle">管理端登录</h1>
+      <p class="auth-desc" id="authDesc">输入管理密钥后才能进入。管理密钥只保存在这台电脑上，不会展示给学生端。</p>
+
+      <form id="setupForm" class="hidden">
+        <label class="field">
+          <span>设置管理密钥 <em>（至少 8 位，不要用纯数字）</em></span>
+          <input id="setupKey" type="password" autocomplete="new-password" placeholder="例如：Xiyou@2026">
+        </label>
+        <label class="field">
+          <span>再次输入管理密钥</span>
+          <input id="setupKey2" type="password" autocomplete="new-password" placeholder="再输入一次">
+        </label>
+        <button class="primary-btn full" type="submit" id="setupBtn">保存密钥并进入</button>
+      </form>
+
+      <form id="loginForm" class="hidden">
+        <label class="field">
+          <span>管理密钥</span>
+          <input id="loginKey" type="password" autocomplete="current-password" placeholder="输入管理密钥">
+        </label>
+        <button class="primary-btn full" type="submit" id="loginBtn">进入管理端</button>
+      </form>
+
+      <p class="form-msg auth-msg" id="authMsg"></p>
+      <p class="auth-note">学生端不需要登录，也不显示管理功能。忘记管理密钥时，删除项目里的 <code>data/admin.json</code> 后重启服务，可以重新设置。</p>
+    </section>
+  </main>
+
+  <main class="admin-layout hidden" id="adminApp">
+    <aside class="admin-side">
+      <div class="admin-side-head">
+        <span class="side-dot"></span>
+        <div><strong>管理台</strong><small>仅本机维护使用</small></div>
+      </div>
+      <nav class="admin-nav" id="adminNav">
+        <button class="admin-nav-btn active" type="button" data-section="overview"><span>概览</span><small>资料与运行状态</small></button>
+        <button class="admin-nav-btn" type="button" data-section="materials"><span>学校资料</span><small>问答依据</small></button>
+        <button class="admin-nav-btn" type="button" data-section="notices"><span>校园通知</span><small>来源与截止时间</small></button>
+        <button class="admin-nav-btn" type="button" data-section="reports"><span>举报处理</span><small>商品与私聊</small></button>
+        <button class="admin-nav-btn" type="button" data-section="ai"><span>AI 设置</span><small>密钥与模型</small></button>
+        <button class="admin-nav-btn" type="button" data-section="security"><span>安全</span><small>修改管理密钥</small></button>
+      </nav>
+      <div class="admin-side-foot">
+        <a id="backToStudentSide" href="/">← 返回学生端</a>
+        <button class="text-btn danger" type="button" id="logoutSide">退出管理端</button>
+      </div>
+    </aside>
+
+    <section class="admin-main">
+      <header class="admin-head">
+        <div>
+          <p class="eyebrow">管理端</p>
+          <h1 id="sectionTitle">概览</h1>
+        </div>
+        <div class="admin-head-actions">
+          <span class="admin-badge" id="adminBadge">已登录</span>
+          <button class="ghost-btn" type="button" id="logoutTop">退出</button>
+        </div>
+      </header>
+
+      <div class="admin-public-warning hidden" id="adminPublicWarning">
+        当前通过公网访问管理端。请只在可信设备上登录，用完退出；管理密钥和 AI 密钥不会显示在页面上。
+      </div>
+
+      <section class="admin-section" id="sectionOverview">
+        <div class="stat-grid">
+          <article class="stat-card"><span>学校资料</span><b id="statMaterials">0</b><small>份</small></article>
+          <article class="stat-card"><span>校园通知</span><b id="statNotices">0</b><small>条</small></article>
+          <article class="stat-card"><span>已结束/已截止</span><b id="statEnded">0</b><small>条</small></article>
+          <article class="stat-card"><span>在售商品</span><b id="statProducts">0</b><small>件</small></article>
+          <article class="stat-card"><span>待处理举报</span><b id="statReports">0</b><small>条</small></article>
+          <article class="stat-card"><span>AI 状态</span><b id="statAI" class="stat-text">未接通</b><small id="statModel"></small></article>
+        </div>
+        <div class="admin-tip">
+          <strong>功能已经分区</strong>
+          <p>学生端只使用聊天、PPTX、集市和私聊；资料、通知、举报、AI 密钥都在这里维护。密钥不会出现在学生页面。</p>
+        </div>
+      </section>
+
+      <section class="admin-section hidden" id="sectionMaterials">
+        <p class="section-desc">粘贴学校通知、新生指南、办事流程等文字。学生端的校园问答只会依据这里的内容回答。</p>
+        <form id="materialForm" class="admin-form">
+          <label class="field"><span>资料名称</span><input id="matName" type="text" maxlength="60" placeholder="例如：2026 级新生报到指南"></label>
+          <label class="field"><span>资料内容</span><textarea id="matContent" rows="7" placeholder="把资料原文粘贴到这里"></textarea></label>
+          <div class="form-foot">
+            <span class="form-msg" id="matFormMsg"></span>
+            <button class="primary-btn" type="submit" id="matSubmit">添加资料</button>
+          </div>
+        </form>
+        <div class="section-list-head"><h2>已添加资料</h2><span id="matListCount">0 份</span></div>
+        <div class="material-list" id="materialList"></div>
+      </section>
+
+      <section class="admin-section hidden" id="sectionNotices">
+        <p class="section-desc">每条通知请填写来源和发布时间。系统会按今天日期计算活动是否结束、报名是否截止。</p>
+        <form id="noticeForm" class="admin-form">
+          <div class="form-grid">
+            <label class="field"><span>通知标题</span><input id="noticeTitle" type="text" maxlength="120" placeholder="例如：校园跑活动报名通知"></label>
+            <label class="field"><span>来源</span><input id="noticeSource" type="text" maxlength="100" placeholder="例如：校团委通知群"></label>
+            <label class="field"><span>发布时间</span><input id="noticePublished" type="date"></label>
+            <label class="field"><span>活动时间（可选）</span><input id="noticeEvent" type="datetime-local"></label>
+            <label class="field"><span>报名截止（可选）</span><input id="noticeDeadline" type="datetime-local"></label>
+          </div>
+          <label class="field"><span>通知正文</span><textarea id="noticeBody" rows="5" placeholder="粘贴通知正文"></textarea></label>
+          <div class="form-foot">
+            <span class="form-msg" id="noticeFormMsg"></span>
+            <button class="primary-btn" type="submit" id="noticeSubmit">添加通知</button>
+          </div>
+        </form>
+        <div class="section-list-head"><h2>已收录通知</h2><span id="noticeListCount">0 条</span></div>
+        <div class="notice-admin-list" id="noticeList"></div>
+      </section>
+
+      <section class="admin-section hidden" id="sectionReports">
+        <p class="section-desc">举报来自集市商品或私聊消息。处理时可以直接下架关联商品。</p>
+        <div class="report-list" id="reportList"></div>
+      </section>
+
+      <section class="admin-section hidden" id="sectionAi">
+        <p class="section-desc">学生端不显示 AI 密钥。这里配置的密钥只保存在本机 <code>.env</code>，用于聊天判断、课件解读、校园情报和帖子创作。</p>
+        <div class="status-box">
+          <span class="status-dot" id="aiDot"></span>
+          <span id="aiStatusText">正在检查…</span>
+        </div>
+        <form id="aiForm" class="admin-form">
+          <label class="field"><span>API 密钥 <em>（已接通时留空表示不修改）</em></span><input id="aiKey" type="password" autocomplete="new-password" placeholder="sk-..."></label>
+          <label class="field"><span>接口地址</span><input id="aiBase" type="text" placeholder="https://api.deepseek.com/v1"></label>
+          <label class="field"><span>模型名称</span><input id="aiModel" type="text" placeholder="deepseek-chat"></label>
+          <div class="form-foot">
+            <span class="form-msg" id="aiMsg"></span>
+            <div class="form-buttons">
+              <button class="text-btn danger" type="button" id="aiClear">清除密钥</button>
+              <button class="primary-btn" type="submit" id="aiSave">保存设置</button>
+            </div>
+          </div>
+        </form>
+        <div class="help-note">
+          <strong>没有密钥？</strong>
+          <p>以 DeepSeek 为例：打开 platform.deepseek.com 注册并创建 API Key，粘贴到上面并保存。密钥不要发到聊天里，也不要写进网页代码。</p>
+        </div>
+      </section>
+
+      <section class="admin-section hidden" id="sectionSecurity">
+        <p class="section-desc">管理密钥用于保护资料、通知、举报和 AI 配置。修改后，其他已登录的管理会话会失效。</p>
+        <form id="securityForm" class="admin-form">
+          <label class="field"><span>当前管理密钥</span><input id="currentKey" type="password" autocomplete="current-password" placeholder="输入当前密钥"></label>
+          <label class="field"><span>新管理密钥 <em>（至少 8 位）</em></span><input id="newKey" type="password" autocomplete="new-password" placeholder="新密钥"></label>
+          <label class="field"><span>再次输入新密钥</span><input id="newKey2" type="password" autocomplete="new-password" placeholder="再输入一次"></label>
+          <div class="form-foot">
+            <span class="form-msg" id="securityMsg"></span>
+            <button class="primary-btn" type="submit" id="changeKeyBtn">修改管理密钥</button>
+          </div>
+        </form>
+        <div class="admin-tip">
+          <strong>本机演示说明</strong>
+          <p>管理端目前只监听 127.0.0.1。不要把服务直接暴露到公网；如果需要在校园内多人使用，应再加 HTTPS、正式账号和访问日志。</p>
+        </div>
+        <button class="ghost-btn" type="button" id="logoutBottom">退出管理端</button>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast hidden" id="toast" role="status"></div>
+  <script src="/admin.js"></script>
+</body>
+</html>

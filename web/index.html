@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f2ec">
+  <meta name="description" content="西邮有问：西安邮电大学校园问答、PPTX 课件解读、校园情报、帖子创作与二手集市。">
+  <title>西邮有问 · 校园生活有疑问，来这里问一问</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%2316406f'/%3E%3Ctext x='32' y='44' font-size='33' text-anchor='middle' fill='%23fbf7ec' font-family='serif'%3E%E9%82%AE%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">邮</div>
+      <div class="brand-text">
+        <h1>西邮有问</h1>
+        <p>校园生活有疑问，来这里问一问</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="ai-badge" id="aiBadge"><span class="badge-dot"></span><span id="aiBadgeText">检查中</span></span>
+      <button class="ghost-btn user-btn" id="identityBtn" type="button" title="修改昵称">
+        <span class="user-dot">我</span>
+        <span id="userName">同学</span>
+      </button>
+      <button class="ghost-btn" id="openMarket" type="button">集市 <span class="count-chip" id="marketCount">0</span></button>
+
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="chat-shell" aria-label="西邮有问聊天">
+      <div class="chat-head">
+        <div>
+          <p class="eyebrow">一个聊天框 · 助手自动判断</p>
+          <h2>问校园、读课件、查消息、买卖闲置</h2>
+        </div>
+        <span class="chat-head-tag">直接说需求</span>
+      </div>
+
+      <div class="ppt-bar hidden" id="pptBar">
+        <div class="ppt-bar-main">
+          <span class="ppt-badge">PPTX</span>
+          <div class="ppt-bar-copy">
+            <strong id="pptBarName">课件</strong>
+            <small id="pptBarMeta"></small>
+          </div>
+        </div>
+        <button class="text-btn" id="dropPptBtn" type="button">结束课件提问</button>
+      </div>
+
+      <div class="notices" id="notices" aria-live="polite"></div>
+
+      <div class="chat-surface">
+        <div class="messages" id="messages" aria-live="polite"></div>
+        <form class="composer" id="composer" autocomplete="off">
+          <button class="attach-btn" id="pptUploadBtn" type="button" title="上传 PPTX 课件">PPTX</button>
+          <textarea id="input" rows="1" maxlength="2000" aria-label="输入问题或需求"></textarea>
+          <button class="send-btn" id="sendBtn" type="submit">
+            <span>发送</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </form>
+        <p class="composer-hint" id="composerHint">Enter 发送 · 支持上传 PPTX 课件 · 私聊在集市里进行</p>
+      </div>
+    </section>
+
+    <aside class="side" aria-label="资料状态与能力说明">
+      <section class="card">
+        <p class="eyebrow">资料库</p>
+        <h2>回答从资料中来</h2>
+        <p>学校问题只根据你添加的资料回答。资料里没有的，我会直接说不知道。</p>
+        <div class="side-stats">
+          <div><b id="sideMatCount">0</b><span>份学校资料</span></div>
+          <div><b id="sideNoticeCount">0</b><span>条校园通知</span></div>
+        </div>
+        <p class="side-note">学校资料和校园通知由维护者在管理端统一维护。学生端只通过聊天使用，不需要填写密钥。</p>
+        <ul class="mat-preview" id="matPreview"></ul>
+      </section>
+
+      <section class="card rules-card">
+        <p class="eyebrow">现在能做什么</p>
+        <div class="rule"><b>01</b><span>依据资料回答校园问题，没有依据就说不知道。</span></div>
+        <div class="rule"><b>02</b><span>上传 PPTX，按页码梳理章节、解释难点、整理提纲。</span></div>
+        <div class="rule"><b>03</b><span>整理校园通知，区分发布时间、活动时间和报名截止。</span></div>
+        <div class="rule"><b>04</b><span>集市只做信息交流，不提供支付、订单、配送或交易担保。</span></div>
+      </section>
+
+      <section class="card privacy-card">
+        <p class="eyebrow">隐私提醒</p>
+        <p>帖子和商品不会自动写入手机号、学号、宿舍号。需要联系方式时默认写“有意者私聊”。私聊只有买卖双方能查看。</p>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="site-footer">
+    <span>学生端 · 无需登录，不显示管理功能</span>
+    <a href="/admin">维护入口</a>
+  </footer>
+
+  <dialog class="sheet wide market-sheet" id="marketDialog" aria-labelledby="marketTitle">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div>
+          <p class="eyebrow">校园集市</p>
+          <h2 id="marketTitle">二手信息交流</h2>
+        </div>
+        <div class="head-actions">
+          <button class="primary-btn" type="button" id="openPublishBtn">发布商品</button>
+          <button class="close-btn" type="button" data-close aria-label="关闭">×</button>
+        </div>
+      </header>
+      <p class="sheet-desc">只提供发布、浏览、查找和买卖双方私聊，不提供线上支付、订单、配送或交易担保。请自行核实物品和对方身份。</p>
+
+      <div class="tab-bar" id="marketTabs" role="tablist">
+        <button class="tab-btn active" type="button" data-market-tab="browse" role="tab">浏览</button>
+        <button class="tab-btn" type="button" data-market-tab="mine" role="tab">我的商品</button>
+        <button class="tab-btn" type="button" data-market-tab="chats" role="tab">私聊</button>
+      </div>
+
+      <section id="marketPanelBrowse">
+        <div class="market-search">
+          <input id="marketSearchInput" type="text" placeholder="搜索台灯、教材、自行车……">
+          <button class="primary-btn" type="button" id="marketSearchBtn">搜索</button>
+        </div>
+        <div class="product-grid" id="marketGrid"></div>
+      </section>
+      <section class="hidden" id="marketPanelMine">
+        <div class="product-grid" id="mineGrid"></div>
+      </section>
+      <section class="hidden" id="marketPanelChats">
+        <div class="conversation-list" id="conversationList"></div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="sheet" id="productDialog" aria-labelledby="productDialogTitle">
+    <div class="sheet-inner" id="productDetail"></div>
+  </dialog>
+
+  <dialog class="sheet" id="publishDialog" aria-labelledby="publishTitle">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div>
+          <p class="eyebrow">校园集市 · 手动发布</p>
+          <h2 id="publishTitle">发布商品</h2>
+        </div>
+        <button class="close-btn" type="button" data-close aria-label="关闭">×</button>
+      </header>
+      <div id="publishFormStep">
+        <p class="sheet-desc">不使用 AI 也可以直接填写发布。提交前会先显示预览，确认后才会公开。</p>
+        <div class="form-grid">
+          <label class="field"><span>物品名称</span><input id="pubName" type="text" maxlength="60" placeholder="例如：台灯"></label>
+          <label class="field"><span>价格（元）</span><input id="pubPrice" type="text" maxlength="12" placeholder="例如：25"></label>
+          <label class="field"><span>成色</span><input id="pubCondition" type="text" maxlength="40" placeholder="例如：九成新"></label>
+        </div>
+        <label class="field"><span>说明</span><textarea id="pubDescription" rows="4" maxlength="1000" placeholder="配件、瑕疵、交易方式等。不要填写手机号、学号或宿舍号。"></textarea></label>
+        <div class="image-upload-row">
+          <button class="ghost-btn" type="button" id="pubAddImage">添加图片（可选）</button>
+          <span class="form-msg" id="pubImageMsg"></span>
+        </div>
+        <div class="image-strip" id="pubImageStrip"></div>
+        <div class="form-foot">
+          <span class="form-msg" id="publishMsg"></span>
+          <button class="primary-btn" type="button" id="publishNext">下一步：预览</button>
+        </div>
+      </div>
+      <div class="hidden" id="publishPreviewStep">
+        <p class="sheet-desc">请确认下面的信息。发布后会公开展示物品信息和你的昵称，不会展示手机号、学号或宿舍。</p>
+        <div id="publishPreviewBody"></div>
+        <div class="form-foot">
+          <button class="ghost-btn" type="button" id="publishBack">返回修改</button>
+          <button class="primary-btn" type="button" id="publishConfirm">确认发布</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet chat-thread-sheet" id="chatDialog" aria-labelledby="chatTitle">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div>
+          <p class="eyebrow">用户私聊 · 不是 AI 助手</p>
+          <h2 id="chatTitle">私聊</h2>
+        </div>
+        <button class="close-btn" type="button" data-close aria-label="关闭">×</button>
+      </header>
+      <div class="private-banner">这是与商品另一方的文字私聊。AI 不会冒充卖家回复，也不会替你发送消息。</div>
+      <div class="chat-thread" id="chatThread"></div>
+      <form class="chat-form" id="chatForm">
+        <input id="chatInput" type="text" maxlength="1000" placeholder="输入私聊消息">
+        <button class="primary-btn" type="submit" id="chatSendBtn">发送</button>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog class="sheet small" id="reportDialog" aria-labelledby="reportTitle">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div>
+          <p class="eyebrow">举报</p>
+          <h2 id="reportTitle">举报不合适的内容</h2>
+        </div>
+        <button class="close-btn" type="button" data-close aria-label="关闭">×</button>
+      </header>
+      <p class="sheet-desc" id="reportTarget">举报内容</p>
+      <label class="field"><span>举报原因</span><textarea id="reportReason" rows="4" maxlength="500" placeholder="例如：虚假商品、辱骂、泄露他人隐私"></textarea></label>
+      <div class="form-foot">
+        <span class="form-msg" id="reportMsg"></span>
+        <button class="primary-btn" type="button" id="reportSubmit">提交举报</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet small" id="identityDialog" aria-labelledby="identityTitle">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div>
+          <p class="eyebrow">本机身份</p>
+          <h2 id="identityTitle">设置昵称</h2>
+        </div>
+        <button class="close-btn" type="button" data-close aria-label="关闭">×</button>
+      </header>
+      <p class="sheet-desc">集市发布和私聊用这个匿名身份区分用户，不需要登录。昵称会公开显示，请不要填写手机号、学号或宿舍。</p>
+      <label class="field"><span>昵称</span><input id="identityName" type="text" maxlength="20" placeholder="例如：西邮同学"></label>
+      <div class="form-foot">
+        <span class="form-msg" id="identityMsg"></span>
+        <button class="primary-btn" type="button" id="identitySave">保存昵称</button>
+      </div>
+      <div class="help-note">
+        <strong>演示两个用户</strong>
+        <p>用另一个浏览器窗口或无痕窗口打开同一地址，会自动获得另一个匿名身份。两个窗口可以互相私聊，其他身份看不到你们的消息。</p>
+      </div>
+    </div>
+  </dialog>
+
+  <input type="file" id="pptFile" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden>
+  <input type="file" id="publishImageFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+  <div class="toast hidden" id="toast" role="status"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

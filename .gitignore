@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+data/*
+!data/.gitkeep
+__pycache__/
+*.pyc
+*.log
+*.pid
+pinggy*.log
+pinggy*.pid
+tunnel*.log
+tunnel*.pid
+lhr*.log
+xiyou-youwen-migration.zip
+.codeartsdoer/

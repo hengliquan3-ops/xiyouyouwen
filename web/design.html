@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F7F3E8">
+  <title>西邮有问 · UI 设计预览</title>
+  <link rel="stylesheet" href="/design.css">
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="penguinBlue" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#2A6A9B"/>
+        <stop offset="1" stop-color="#64A6CD"/>
+      </linearGradient>
+    </defs>
+    <symbol id="icon-chat" viewBox="0 0 24 24"><path d="M5 6.8h10.8c1.8 0 3.2 1.4 3.2 3.2v4.3c0 1.8-1.4 3.2-3.2 3.2h-5.9L7 20v-2.5H5c-1.8 0-3.2-1.4-3.2-3.2V10c0-1.8 1.4-3.2 3.2-3.2Z"/><path d="M8 11h6M8 14h4"/></symbol>
+    <symbol id="icon-post" viewBox="0 0 24 24"><path d="M6 3.8h8.4l4.2 4.1v12.3H6z"/><path d="M14.2 3.9v4.4h4.3M9 12h6M9 15.5h4.2"/></symbol>
+    <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M3.8 7.3c0-1.1.9-2 2-2h4l1.7 2.1h6.7c1.1 0 2 .9 2 2v7.8c0 1.1-.9 2-2 2H5.8c-1.1 0-2-.9-2-2Z"/><path d="M4.3 10.4h15.3"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.4v4.9l3.1 1.9"/></symbol>
+    <symbol id="icon-bookmark" viewBox="0 0 24 24"><path d="M6.2 4.2h11.6v16L12 16.5l-5.8 3.7z"/><path d="M9 8.5h6M9 11.5h4"/></symbol>
+    <symbol id="icon-alert" viewBox="0 0 24 24"><path d="M12 3.9 21 20H3z"/><path d="M12 9v4.7M12 17.1v.1"/></symbol>
+    <symbol id="icon-split" viewBox="0 0 24 24"><path d="M4.5 6.5h4.2c4 0 4.2 11 8.2 11h2.7"/><path d="M4.5 17.5h4.2c4 0 4.2-11 8.2-11h2.7"/><path d="m17 4 2.8 2.5L17 9M17 15l2.8 2.5L17 20"/></symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6.2c0-1.1-.9-2-2-2H6.2c-1.1 0-2 .9-2 2V15c0 1.1.9 2 2 2H8"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24"><path d="M4.5 19.5 5 15l10.7-10.7 4 4L9 19l-4.5.5Z"/><path d="m13.8 6.2 4 4"/></symbol>
+    <symbol id="icon-send" viewBox="0 0 24 24"><path d="M4 12.2 20 4l-4.3 16-3.9-6.3L4 12.2Z"/><path d="M11.8 13.7 20 4"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m4.8 12.4 4.5 4.4 9.9-9.7"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4.5 12h14M13 6.5l6 5.5-6 5.5"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5.2" y="10" width="13.6" height="10.2" rx="2"/><path d="M8.4 10V7.4c0-2 1.6-3.6 3.6-3.6s3.6 1.6 3.6 3.6V10M12 14.2v2.4"/></symbol>
+    <symbol id="icon-quote" viewBox="0 0 24 24"><path d="M9.5 6.2c-3.2 1.2-5 3.5-5 6.7v4.9h5.8v-5.8H7.1c.2-1.7 1.2-2.8 3-3.6L9.5 6.2ZM20 6.2c-3.2 1.2-5 3.5-5 6.7v4.9h5.8v-5.8h-3.2c.2-1.7 1.2-2.8 3-3.6L20 6.2Z"/></symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="icon-spark" viewBox="0 0 24 24"><path d="M12 3.5 14 9l5.5 2-5.5 2-2 5.5-2-5.5L4.5 11 10 9l2-5.5Z"/><path d="M18.5 4.2v3M20 5.7h-3"/></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9 7V4.8h6V7M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></symbol>
+    <symbol id="icon-stamp" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" stroke-dasharray="2.2 2.2"/><path d="m8 15 3-5 2 3 3-4"/></symbol>
+    <symbol id="icon-book" viewBox="0 0 24 24"><path d="M3.5 6.5c3-1.5 6-1 8.5.5 2.5-1.5 5.5-2 8.5-.5v11c-3-1-6-.5-8.5 1-2.5-1.5-5.5-2-8.5-1z"/><path d="M12 7v11"/></symbol>
+    <symbol id="icon-wifi" viewBox="0 0 24 24"><path d="M3.5 9c4.8-4.5 12.2-4.5 17 0M6.8 12.4c3-2.7 7.4-2.7 10.4 0M10 15.8c1.2-1.1 2.8-1.1 4 0"/><circle cx="12" cy="18.4" r="1.1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 13h2M12 13h2M16 13h2M8 17h2M12 17h2M16 17h2"/></symbol>
+    <symbol id="bird-mark" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="29" fill="#FFFCF5" stroke="#245B88" stroke-width="2.6"/>
+      <path d="M32 13c-13 0-21 10-21 24 0 14 8 22 21 22s21-8 21-22c0-14-8-24-21-24Z" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="2.4"/>
+      <ellipse cx="32" cy="40" rx="12" ry="13" fill="#FFF8E7"/>
+      <ellipse cx="32" cy="29" rx="11" ry="9" fill="#FFFCF5"/>
+      <circle cx="27" cy="29" r="1.7" fill="#1B2733"/><circle cx="37" cy="29" r="1.7" fill="#1B2733"/>
+      <path d="M29 34c2-2 5-2 7 0-1 3-2 4-3.5 4S30 37 29 34Z" fill="#F4DFA0" stroke="#1D4568" stroke-width="1.5"/>
+      <ellipse cx="22" cy="36" rx="3" ry="2" fill="#F3D1B1"/><ellipse cx="42" cy="36" rx="3" ry="2" fill="#F3D1B1"/>
+      <path d="M17 25c2-8 8-13 15-12 7 1 12 6 13 12-9-3-20-3-28 0Z" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="2"/>
+      <path d="M13 25c9-4 29-4 38 0 2 1 2 3 0 4-10 3-28 3-38 0-2-1-2-3 0-4Z" fill="#245B88"/>
+      <path d="M20 48c-4 2-7 4-9 7M44 48c4 2 7 4 9 7" fill="none" stroke="#1D4568" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="mailbird" viewBox="0 0 320 300">
+      <ellipse cx="160" cy="274" rx="104" ry="12" fill="#E9DEC7" opacity=".62"/>
+      <path d="M95 161c-25 7-39 31-33 55 5 18 23 24 40 15 15-8 20-28 16-48" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M160 54c-55 0-88 44-88 107 0 66 35 106 88 106s88-40 88-106C248 98 215 54 160 54Z" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="5"/>
+      <ellipse cx="160" cy="191" rx="58" ry="66" fill="#FFF8E7" stroke="#1D4568" stroke-width="3"/>
+      <ellipse cx="160" cy="132" rx="52" ry="47" fill="#FFFCF5" stroke="#1D4568" stroke-width="3"/>
+      <ellipse cx="141" cy="130" rx="4.2" ry="6" fill="#1B2733"/><ellipse cx="179" cy="130" rx="4.2" ry="6" fill="#1B2733"/>
+      <circle cx="142.5" cy="127.5" r="1.4" fill="#FFFCF5"/><circle cx="180.5" cy="127.5" r="1.4" fill="#FFFCF5"/>
+      <path d="M150 146c5-5 15-5 20 0-3 9-7 13-10 14-4-1-7-6-10-14Z" fill="#F4DFA0" stroke="#1D4568" stroke-width="3.2" stroke-linejoin="round"/>
+      <ellipse cx="113" cy="151" rx="11" ry="6" fill="#F3D1B1"/><ellipse cx="207" cy="151" rx="11" ry="6" fill="#F3D1B1"/>
+      <path d="M105 100c5-35 33-55 63-50 26 4 44 23 47 44-34-10-81-8-110 6Z" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M92 101c38-15 94-14 132 3 7 3 8 11 1 14-33 11-94 10-130 2-8-2-9-15-3-19Z" fill="#245B88" stroke="#1D4568" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="143" y="76" width="34" height="24" rx="5" fill="#F4DFA0" stroke="#1D4568" stroke-width="2.6"/>
+      <path d="M147 80l13 10 13-10" fill="none" stroke="#1D4568" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M225 170c21 6 31 26 24 46-6 17-24 23-39 14-13-8-16-27-8-44" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M103 151c-5 33 1 60 15 81" fill="none" stroke="#1D4568" stroke-width="8" stroke-linecap="round"/>
+      <g transform="rotate(-4 111 232)">
+        <rect x="73" y="205" width="74" height="58" rx="13" fill="#64A6CD" stroke="#1D4568" stroke-width="4"/>
+        <path d="M75 219h70" fill="none" stroke="#1D4568" stroke-width="3.4" stroke-linecap="round"/>
+        <rect x="96" y="214" width="28" height="19" rx="4" fill="#F4DFA0" stroke="#1D4568" stroke-width="2.4"/>
+        <path d="M100 219h20" stroke="#245B88" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <g transform="rotate(10 222 205)">
+        <rect x="179" y="179" width="86" height="54" rx="7" fill="#FFFCF5" stroke="#1D4568" stroke-width="4"/>
+        <path d="M184 185l38 29 37-29" fill="none" stroke="#1D4568" stroke-width="3.4" stroke-linejoin="round"/>
+        <circle cx="222" cy="207" r="11" fill="#245B88"/>
+        <path d="M217.5 202.5h9v9h-9z" fill="none" stroke="#FFFCF5" stroke-width="1.8"/>
+        <path d="M218.5 203.5l3.5 3 3.5-3" fill="none" stroke="#FFFCF5" stroke-width="1.4"/>
+      </g>
+      <path d="M129 252c-10 5-20 7-31 6M191 252c10 5 20 7 31 6" fill="none" stroke="#1D4568" stroke-width="4" stroke-linecap="round"/>
+      <path d="M126 265c-14 4-24 4-36 1M194 265c14 4 24 4 36 1" fill="none" stroke="#F3D1B1" stroke-width="8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="mailbird-empty" viewBox="0 0 300 280">
+      <ellipse cx="150" cy="258" rx="98" ry="11" fill="#E9DEC7" opacity=".62"/>
+      <path d="M150 46c-51 0-82 41-82 99 0 63 33 101 82 101s82-38 82-101c0-58-31-99-82-99Z" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="5"/>
+      <ellipse cx="150" cy="181" rx="55" ry="64" fill="#FFF8E7" stroke="#1D4568" stroke-width="3"/>
+      <ellipse cx="150" cy="124" rx="49" ry="45" fill="#FFFCF5" stroke="#1D4568" stroke-width="3"/>
+      <ellipse cx="132" cy="122" rx="4" ry="5.7" fill="#1B2733"/><ellipse cx="168" cy="122" rx="4" ry="5.7" fill="#1B2733"/>
+      <circle cx="133.5" cy="119.5" r="1.3" fill="#FFFCF5"/><circle cx="169.5" cy="119.5" r="1.3" fill="#FFFCF5"/>
+      <path d="M140 138c5-5 15-5 20 0-3 9-7 13-10 14-4-1-7-6-10-14Z" fill="#F4DFA0" stroke="#1D4568" stroke-width="3.2" stroke-linejoin="round"/>
+      <ellipse cx="104" cy="143" rx="10" ry="5.7" fill="#F3D1B1"/><ellipse cx="196" cy="143" rx="10" ry="5.7" fill="#F3D1B1"/>
+      <path d="M98 93c5-34 31-53 60-48 25 4 42 22 45 42-32-10-78-8-105 6Z" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M86 94c36-14 90-13 126 3 7 3 8 10 1 13-31 10-90 9-124 2-8-2-9-14-3-18Z" fill="#245B88" stroke="#1D4568" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="134" y="69" width="33" height="23" rx="5" fill="#F4DFA0" stroke="#1D4568" stroke-width="2.6"/>
+      <path d="M138 73l12 10 13-10" fill="none" stroke="#1D4568" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M86 156c-18 9-23 28-14 43 8 13 25 13 37 3 10-9 11-24 5-37" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M214 156c18 9 23 28 14 43-8 13-25 13-37 3-10-9-11-24-5-37" fill="url(#penguinBlue)" stroke="#1D4568" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M95 204h110l-11 53H106z" fill="#FFFCF5" stroke="#1D4568" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M101 220h98" fill="none" stroke="#64A6CD" stroke-width="4" stroke-linecap="round"/>
+      <path d="M115 204c0-22 14-38 35-38s35 16 35 38" fill="none" stroke="#1D4568" stroke-width="5" stroke-linecap="round"/>
+      <path d="M140 231c7-5 14-5 20 0" fill="none" stroke="#245B88" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 5"/>
+      <path d="M56 106c5-10 12-12 18-7M64 99c5 1 7 6 4 11" fill="none" stroke="#64A6CD" stroke-width="3" stroke-linecap="round"/>
+      <path d="M236 84l16-10 12 16-16 10z" fill="#F4DFA0" stroke="#1D4568" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M242 84l10 6M241 93l10-7" fill="none" stroke="#1D4568" stroke-width="1.7"/>
+      <path d="M128 253c-10 4-20 6-31 5M172 253c10 4 20 6 31 5" fill="none" stroke="#1D4568" stroke-width="4" stroke-linecap="round"/>
+    </symbol>
+  </svg>
+
+  <div class="design-strip">
+    <div class="design-strip-title"><span class="design-dot"></span> UI 设计预览</div>
+    <p class="design-strip-note">默认是真实未接通状态；切换查看评审样例，样例均不调用 AI。</p>
+    <div class="design-switch" id="qaStateSwitch" role="tablist" aria-label="问答设计状态">
+      <button type="button" class="design-state active" data-qa-state="real" role="tab" aria-selected="true">真实未接通</button>
+      <button type="button" class="design-state" data-qa-state="answer" role="tab" aria-selected="false">有依据回答</button>
+      <button type="button" class="design-state" data-qa-state="clarify" role="tab" aria-selected="false">需要追问</button>
+      <button type="button" class="design-state" data-qa-state="insufficient" role="tab" aria-selected="false">资料不足</button>
+      <button type="button" class="design-state" data-qa-state="conflict" role="tab" aria-selected="false">资料冲突</button>
+      <button type="button" class="design-state" data-qa-state="empty" role="tab" aria-selected="false">资料为空</button>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#qa-real" data-view-link="qa">
+        <span class="brand-mark"><img src="/assets/xiyou-mascot-head.jpg" alt=""></span>
+        <span class="brand-copy"><strong>西邮有问</strong><small>西安邮电大学 · 学生助手</small></span>
+      </a>
+
+      <nav class="side-nav" aria-label="主要功能">
+        <button type="button" class="side-nav-item active" data-view="qa">
+          <span class="nav-icon"><svg class="icon"><use href="#icon-chat"></use></svg></span>
+          <span class="nav-copy"><strong>校园问答</strong><small>先查资料，再回答</small></span>
+        </button>
+        <button type="button" class="side-nav-item" data-view="post">
+          <span class="nav-icon"><svg class="icon"><use href="#icon-post"></use></svg></span>
+          <span class="nav-copy"><strong>求助帖助手</strong><small>把话说清楚</small></span>
+        </button>
+        <button type="button" class="side-nav-item" data-view="materials">
+          <span class="nav-icon"><svg class="icon"><use href="#icon-folder"></use></svg></span>
+          <span class="nav-copy"><strong>资料管理</strong><small>回答的依据</small></span>
+        </button>
+      </nav>
+
+      <div class="history-block">
+        <div class="section-label"><span>历史会话</span><span class="mini-tag">示例位</span></div>
+        <div class="history-empty">
+          <svg class="icon history-icon"><use href="#icon-clock"></use></svg>
+          <p>还没有历史会话</p>
+          <small>开始提问后会显示在这里</small>
+        </div>
+      </div>
+
+      <div class="side-foot">
+        <div class="ai-mini"><span class="ai-mini-dot"></span><span>AI 功能接入中</span></div>
+        <p>资料由维护者添加，回答会标注原文依据。</p>
+      </div>
+    </aside>
+
+    <div class="workspace" id="workspace">
+      <div class="main-area">
+        <header class="mobile-topbar">
+          <div class="mobile-brand">
+            <span class="brand-mark small"><img src="/assets/xiyou-mascot-head.jpg" alt=""></span>
+            <strong>西邮有问</strong>
+          </div>
+          <span class="ai-pill"><span class="ai-pill-dot"></span>AI 接入中</span>
+        </header>
+
+        <nav class="mobile-nav" aria-label="移动端功能切换">
+          <button type="button" class="mobile-nav-item active" data-view="qa"><svg class="icon"><use href="#icon-chat"></use></svg>问答</button>
+          <button type="button" class="mobile-nav-item" data-view="post"><svg class="icon"><use href="#icon-post"></use></svg>写帖子</button>
+          <button type="button" class="mobile-nav-item" data-view="materials"><svg class="icon"><use href="#icon-folder"></use></svg>资料</button>
+        </nav>
+
+        <header class="main-topbar">
+          <div>
+            <p class="eyebrow">校园生活助手</p>
+            <h1 id="viewTitle">校园问答</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="ai-pill"><span class="ai-pill-dot"></span>AI 接入中</span>
+            <button type="button" class="ghost-btn source-toggle" id="sourceToggle">
+              <svg class="icon"><use href="#icon-bookmark"></use></svg>
+              资料核对
+            </button>
+          </div>
+        </header>
+
+        <main class="content">
+          <section class="view" id="viewQa">
+            <div class="qa-state real-state" id="qaReal">
+              <div class="hero">
+                <div class="hero-copy">
+                  <span class="hand-note"><svg class="icon spark"><use href="#icon-spark"></use></svg>带着依据，再回答。</span>
+                  <h2>校园里的事，<br><span>带着依据问。</span></h2>
+                  <p class="hero-desc">根据已添加的学校资料整理回答，相关原文可随时查看。</p>
+                  <div class="ai-notice">
+                    <span class="notice-icon"><svg class="icon"><use href="#icon-spark"></use></svg></span>
+                    <div><strong>AI 功能接入中，目前可管理资料。</strong><p>问答发送和帖子生成暂不可用；资料与引用样式已准备好。</p></div>
+                  </div>
+                </div>
+                <div class="mascot-hero" aria-hidden="true">
+                  <img class="mascot-full" src="/assets/xiyou-mascot-original.jpg" alt="">
+                </div>
+              </div>
+
+              <div class="ask-card">
+                <div class="ask-label"><span>问一个问题</span><span class="ask-hint">可先写草稿</span></div>
+                <textarea id="questionInput" rows="2" maxlength="300" placeholder="想了解入学、校园生活，还是办事流程？"></textarea>
+                <div class="ask-actions">
+                  <span class="char-count" id="charCount">0 / 300</span>
+                  <button class="primary-btn" type="button" id="sendQuestion" disabled aria-disabled="true">
+                    <svg class="icon"><use href="#icon-lock"></use></svg>
+                    发送
+                  </button>
+                </div>
+              </div>
+              <p class="disabled-explain">AI 尚未接通，发送按钮不可用。你可以先输入问题，接通后继续。</p>
+
+              <div class="example-block">
+                <p class="example-label">问题示例 <span>不代表已收录对应资料</span></p>
+                <div class="example-chips">
+                  <button type="button" class="example-chip" data-question="入学报到需要准备什么？">入学报到需要准备什么？<svg class="icon"><use href="#icon-arrow"></use></svg></button>
+                  <button type="button" class="example-chip" data-question="宿舍相关规定在哪里查看？">宿舍相关规定在哪里查看？<svg class="icon"><use href="#icon-arrow"></use></svg></button>
+                  <button type="button" class="example-chip" data-question="某项证明应该怎么办理？">某项证明应该怎么办理？<svg class="icon"><use href="#icon-arrow"></use></svg></button>
+                </div>
+              </div>
+
+              <p class="soft-rule">问题不清楚会先追问，资料没有会明确说明，资料冲突会标出差异。</p>
+            </div>
+
+            <div class="qa-state sample-state hidden" id="qaAnswer">
+              <div class="sample-banner"><svg class="icon"><use href="#icon-spark"></use></svg>交互示例 · 非真实 AI 回答</div>
+              <div class="conversation">
+                <div class="user-query"><span>你问</span><p>入学报到需要准备什么？</p></div>
+                <article class="answer-card">
+                  <header class="answer-head">
+                    <span class="answer-avatar"><img src="/assets/xiyou-mascot-head.jpg" alt=""></span>
+                    <div><strong>西邮有问</strong><small>依据示例资料整理</small></div>
+                    <span class="answer-tag">示例</span>
+                  </header>
+                  <p>先确认你所在校区和具体办理事项，再按资料中列出的材料准备。<button type="button" class="cite" data-source="s1">[1]</button>报到安排和材料清单以你所在学院的通知为准。<button type="button" class="cite" data-source="s2">[2]</button></p>
+                  <p>把证件、通知书和资料里列出的材料提前整理好，报到前再核对一次校区与时间。</p>
+                  <div class="answer-foot"><svg class="icon"><use href="#icon-bookmark"></use></svg>资料原文可在右侧逐条核对</div>
+                </article>
+                <div class="source-strip">
+                  <button type="button" class="source-mini" data-source="s1">
+                    <span class="source-mini-top"><svg class="icon"><use href="#icon-folder"></use></svg>示例资料 A</span>
+                    <span class="source-mini-quote">“办理前先确认所在校区和办理事项。”</span>
+                    <span class="source-mini-link">查看原文 <svg class="icon"><use href="#icon-arrow"></use></svg></span>
+                  </button>
+                  <button type="button" class="source-mini" data-source="s2">
+                    <span class="source-mini-top"><svg class="icon"><use href="#icon-folder"></use></svg>示例资料 B</span>
+                    <span class="source-mini-quote">“材料清单以具体通知为准。”</span>
+                    <span class="source-mini-link">查看原文 <svg class="icon"><use href="#icon-arrow"></use></svg></span>
+                  </button>
+                </div>
+                <div class="follow-actions">
+                  <button type="button" class="soft-btn" data-qa-state="real">返回真实状态</button>
+                  <button type="button" class="text-btn" data-question="能按校区分别说明吗？">继续追问<svg class="icon"><use href="#icon-arrow"></use></svg></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="qa-state sample-state hidden" id="qaClarify">
+              <div class="sample-banner"><svg class="icon"><use href="#icon-spark"></use></svg>交互示例 · 非真实 AI 回答</div>
+              <div class="conversation">
+                <div class="user-query"><span>你问</span><p>我要办个证明，应该怎么弄？</p></div>
+                <article class="clarify-card">
+                  <header class="answer-head">
+                    <span class="answer-avatar"><img src="/assets/xiyou-mascot-head.jpg" alt=""></span>
+                    <div><strong>先确认一下</strong><small>不替你猜校区或办理事项</small></div>
+                  </header>
+                  <h3>你想了解哪个校区的情况？</h3>
+                  <p>不同校区的办理窗口和所需材料可能不同。选一个，或直接补充你的事项。</p>
+                  <div class="option-row" role="group" aria-label="校区选项">
+                    <button type="button" class="option-chip" data-option="示例校区 A">示例校区 A</button>
+                    <button type="button" class="option-chip" data-option="示例校区 B">示例校区 B</button>
+                    <button type="button" class="option-chip" data-option="暂不确定">暂不确定</button>
+                  </div>
+                  <label class="inline-input"><input id="clarifyInput" type="text" placeholder="也可以直接补充校区、年级或办理事项"><button type="button" class="soft-btn">补充</button></label>
+                  <div class="answer-foot"><svg class="icon"><use href="#icon-alert"></use></svg>缺少必要信息时，助手不会擅自生成结论</div>
+                </article>
+              </div>
+            </div>
+
+            <div class="qa-state sample-state hidden" id="qaInsufficient">
+              <div class="sample-banner"><svg class="icon"><use href="#icon-spark"></use></svg>交互示例 · 非真实 AI 回答</div>
+              <div class="conversation">
+                <div class="user-query"><span>你问</span><p>某个证明必须去哪个窗口办理？</p></div>
+                <article class="insufficient-card">
+                  <div class="status-head"><span class="status-icon"><svg class="icon"><use href="#icon-alert"></use></svg></span><div><h3>资料不足</h3><p>当前资料中没有找到足够依据，暂时无法确认。</p></div></div>
+                  <p class="insufficient-note">没有足够原文支持的部分，不会用猜测补全。你可以补充问题，或先添加相关资料。</p>
+                  <div class="inline-actions">
+                    <button type="button" class="primary-btn" data-question-focus="true">补充问题</button>
+                    <button type="button" class="ghost-btn" data-goto-materials="true"><svg class="icon"><use href="#icon-folder"></use></svg>添加相关资料</button>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="qa-state sample-state hidden" id="qaConflict">
+              <div class="sample-banner"><svg class="icon"><use href="#icon-spark"></use></svg>交互示例 · 非真实 AI 回答</div>
+              <div class="conversation">
+                <div class="user-query"><span>你问</span><p>这份材料到底在上午还是下午办理？</p></div>
+                <article class="conflict-card">
+                  <div class="conflict-head"><span class="status-icon warm"><svg class="icon"><use href="#icon-split"></use></svg></span><div><h3>资料说法不一致</h3><p>两份示例资料对同一事项的描述不同，助手不自动判断哪份正确。</p></div></div>
+                  <div class="conflict-grid">
+                    <button type="button" class="conflict-source" data-source="s1">
+                      <span class="conflict-source-top"><strong>示例资料 A</strong><span>示例说法</span></span>
+                      <span class="conflict-quote">“办理时间写在上午。”</span>
+                      <span class="conflict-link">查看原文 <svg class="icon"><use href="#icon-arrow"></use></svg></span>
+                    </button>
+                    <div class="conflict-vs" aria-hidden="true"><svg class="icon"><use href="#icon-split"></use></svg></div>
+                    <button type="button" class="conflict-source" data-source="s2">
+                      <span class="conflict-source-top"><strong>示例资料 B</strong><span>示例说法</span></span>
+                      <span class="conflict-quote">“办理时间写在下午。”</span>
+                      <span class="conflict-link">查看原文 <svg class="icon"><use href="#icon-arrow"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="conflict-note"><svg class="icon"><use href="#icon-bookmark"></use></svg>建议向负责部门再次确认；日期与适用范围以实际资料为准。</div>
+                </article>
+              </div>
+            </div>
+
+            <div class="qa-state sample-state empty-state hidden" id="qaEmpty">
+              <div class="sample-banner"><svg class="icon"><use href="#icon-spark"></use></svg>交互示例 · 非真实 AI 回答</div>
+              <div class="empty-card">
+                <div class="empty-bird" aria-hidden="true"><img class="mascot-full" src="/assets/xiyou-mascot-original.jpg" alt=""></div>
+                <h2>先添加资料，回答才能有据可查。</h2>
+                <p>资料库现在是空的。添加学校资料后，问答才会围绕真实原文整理。</p>
+                <button type="button" class="primary-btn" data-goto-materials="true"><svg class="icon"><use href="#icon-folder"></use></svg>前往资料管理</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="view hidden" id="viewPost">
+            <div class="post-intro">
+              <span class="hand-note"><svg class="icon spark"><use href="#icon-spark"></use></svg>认真写，慢慢改。</span>
+              <h2>把想求助的事，说清楚。</h2>
+              <p>帮你整理成可复制的帖子，由你决定发到哪里。</p>
+            </div>
+
+            <div class="type-grid" role="group" aria-label="帖子类型">
+              <button type="button" class="type-card active" data-post-type="找搭子">
+                <span class="type-icon"><svg class="icon"><use href="#icon-chat"></use></svg></span>
+                <strong>找搭子</strong><small>自习、运动、吃饭</small>
+              </button>
+              <button type="button" class="type-card" data-post-type="失物招领">
+                <span class="type-icon"><svg class="icon"><use href="#icon-bookmark"></use></svg></span>
+                <strong>失物招领</strong><small>捡到或寻找物品</small>
+              </button>
+              <button type="button" class="type-card" data-post-type="活动组队">
+                <span class="type-icon"><svg class="icon"><use href="#icon-spark"></use></svg></span>
+                <strong>活动组队</strong><small>社团、比赛、出行</small>
+              </button>
+            </div>
+
+            <div class="post-compose">
+              <div class="ai-notice compact"><span class="notice-icon"><svg class="icon"><use href="#icon-spark"></use></svg></span><div><strong>AI 功能接入中，帖子生成暂不可用。</strong><p>可以先写草稿；接通后会按类型追问缺少的信息。</p></div></div>
+              <textarea id="postInput" rows="4" maxlength="500" placeholder="想找什么样的搭子？大概什么时候、在哪里？先写下来，AI 接通后再整理。"></textarea>
+              <div class="post-compose-foot">
+                <span class="char-count" id="postCount">0 / 500</span>
+                <button type="button" class="primary-btn" disabled aria-disabled="true"><svg class="icon"><use href="#icon-lock"></use></svg>整理成草稿</button>
+              </div>
+            </div>
+
+            <article class="draft-card" aria-label="帖子草稿设计示例">
+              <div class="sample-banner inline"><svg class="icon"><use href="#icon-spark"></use></svg>交互示例 · 非真实 AI 生成</div>
+              <header class="draft-head">
+                <div><span class="draft-kicker">求助帖 · 找搭子</span><h3 id="draftTitle" contenteditable="false">找周六下午自习搭子</h3></div>
+                <span class="draft-tag">草稿</span>
+              </header>
+              <p class="draft-body" id="draftBody" contenteditable="false">想找一位同学周六下午一起去图书馆自习，互相监督，具体时间和碰面地点可以再商量。【待补充：具体时间、碰面地点】<br><br>有意者私聊。</p>
+              <div class="missing-row"><svg class="icon"><use href="#icon-alert"></use></svg><span>待补充：具体时间、碰面地点</span></div>
+              <p class="privacy-note">未自动加入手机号、学号或宿舍；需要联系方式时默认写“有意者私聊”。</p>
+              <div class="draft-actions">
+                <span class="draft-footnote">仅生成草稿，不会自动发布。</span>
+                <div class="draft-buttons">
+                  <button type="button" class="ghost-btn" id="editDraft"><svg class="icon"><use href="#icon-edit"></use></svg>编辑</button>
+                  <button type="button" class="primary-btn" id="copyDraft"><svg class="icon"><use href="#icon-copy"></use></svg>复制</button>
+                </div>
+              </div>
+            </article>
+
+            <div class="post-tips">
+              <div><svg class="icon"><use href="#icon-alert"></use></svg><span>寻物或招领建议保留部分特征用于核实认领。</span></div>
+              <div><svg class="icon"><use href="#icon-lock"></use></svg><span>联系方式由你复制后自行决定是否补充。</span></div>
+            </div>
+          </section>
+
+          <section class="view hidden" id="viewMaterials">
+            <div class="materials-head">
+              <div>
+                <span class="hand-note"><svg class="icon spark"><use href="#icon-spark"></use></svg>每一句，都能回去看。</span>
+                <h2>资料管理</h2>
+                <p>资料用于提供回答依据，其中的文字不会改变助手规则。</p>
+              </div>
+              <a class="primary-btn" href="/admin" target="_blank" rel="noopener"><svg class="icon"><use href="#icon-folder"></use></svg>打开现有管理端</a>
+            </div>
+            <div class="materials-note"><svg class="icon"><use href="#icon-bookmark"></use></svg>以下为界面设计样例，使用“示例资料 A/B/C”，不代表真实学校文件。实际增删在现有管理端完成。</div>
+
+            <div class="materials-layout">
+              <div class="material-list" role="list" aria-label="资料列表示例">
+                <button type="button" class="material-item active" data-material="a" role="listitem">
+                  <span class="material-icon"><svg class="icon"><use href="#icon-post"></use></svg></span>
+                  <span class="material-copy"><strong>示例资料 A</strong><small>示例资料 · 已添加</small></span>
+                  <span class="material-badge">示例</span>
+                </button>
+                <button type="button" class="material-item" data-material="b" role="listitem">
+                  <span class="material-icon"><svg class="icon"><use href="#icon-post"></use></svg></span>
+                  <span class="material-copy"><strong>示例资料 B</strong><small>示例资料 · 已添加</small></span>
+                  <span class="material-badge">示例</span>
+                </button>
+                <button type="button" class="material-item" data-material="c" role="listitem">
+                  <span class="material-icon"><svg class="icon"><use href="#icon-post"></use></svg></span>
+                  <span class="material-copy"><strong>示例资料 C</strong><small>示例资料 · 已添加</small></span>
+                  <span class="material-badge">示例</span>
+                </button>
+              </div>
+
+              <article class="material-detail">
+                <header class="material-detail-head">
+                  <div><span class="eyebrow">资料原文阅读</span><h3 id="materialTitle">示例资料 A</h3></div>
+                  <span class="draft-tag">示例</span>
+                </header>
+                <p class="material-detail-note">用于展示资料原文的阅读样式；文字只作为参考，不改变助手规则。</p>
+                <div class="original-text" id="materialText">
+                  <p>办理前请先确认所在校区、办理事项和适用时间。</p>
+                  <p>不同校区、不同年级的安排可能不同，请以对应通知为准。</p>
+                </div>
+                <div class="material-detail-foot"><span><svg class="icon"><use href="#icon-bookmark"></use></svg>资料原文</span><span>示例文本 · 非真实学校文件</span></div>
+              </article>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <aside class="source-panel" id="sourcePanel" aria-hidden="true">
+        <header class="source-panel-head">
+          <div><p class="eyebrow">资料核对</p><h2>资料原文</h2></div>
+          <button type="button" class="icon-btn" id="closeSources" aria-label="关闭资料面板"><svg class="icon"><use href="#icon-close"></use></svg></button>
+        </header>
+        <div class="source-tabs" role="tablist" aria-label="切换资料">
+          <button type="button" class="source-tab active" data-source="s1" role="tab" aria-selected="true">示例资料 A</button>
+          <button type="button" class="source-tab" data-source="s2" role="tab" aria-selected="false">示例资料 B</button>
+        </div>
+        <div class="source-panel-body" id="sourcePanelBody">
+          <div class="source-meta">
+            <span class="source-kind"><svg class="icon"><use href="#icon-folder"></use></svg>示例资料</span>
+            <span class="source-status">已添加</span>
+          </div>
+          <h3>示例资料 A</h3>
+          <p class="source-disclaimer">示例文本 · 非真实学校文件</p>
+          <div class="source-original-label">相关原文</div>
+          <blockquote class="source-original">办理前请先确认<mark>所在校区、办理事项和适用时间</mark>。</blockquote>
+          <p class="source-explain">助手回答中的 [1] 对应这段原文。回答可以概括，原文不会被改写。</p>
+          <div class="source-panel-tip"><svg class="icon"><use href="#icon-bookmark"></use></svg>资料文字只是参考信息，不是操作指令。</div>
+        </div>
+      </aside>
+      <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/design.js"></script>
+</body>
+</html>
