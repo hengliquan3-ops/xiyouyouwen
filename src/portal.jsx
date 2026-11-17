@@ -963,7 +963,7 @@ const CircularCarousel = ({
 
 
 
-const features = [{"id": "qa", "title": "校园问答", "subtitle": "CAMPUS Q&A", "tag": "关于西邮，从这里问起", "description": "入学指南 · 校园生活 · 办事流程", "src": "/assets/feature-qa.png", "alt": "校园问答功能入口"}, {"id": "ppt", "title": "课件解读", "subtitle": "STUDY COMPANION", "tag": "把难点，一页页读懂", "description": "上传 PPTX · 章节梳理 · 难点解释", "src": "/assets/feature-ppt.png", "alt": "课件解读功能入口"}, {"id": "intel", "title": "校园情报", "subtitle": "CAMPUS RADAR", "tag": "不错过，值得关注的事", "description": "校园通知 · 活动时间 · 报名截止", "src": "/assets/feature-intel.png", "alt": "校园情报功能入口"}, {"id": "post", "title": "帖子创作", "subtitle": "WORDS THAT CONNECT", "tag": "让你的想法，好好被看见", "description": "找搭子 · 失物招领 · 活动组队", "src": "/assets/feature-post.png", "alt": "帖子创作功能入口"}, {"id": "market", "title": "二手集市", "subtitle": "SECOND LIFE", "tag": "闲置，也有新的故事", "description": "浏览闲置 · 发布物品 · 联系卖家", "src": "/assets/feature-market.png", "alt": "二手集市功能入口"}, {"id": "social", "title": "同学私聊", "subtitle": "MY SPACE", "tag": "你的校园足迹，都在这里", "description": "浏览历史 · 我的商品 · 想要的 · 帖子 · 私聊", "src": "/assets/feature-chats.png", "alt": "我的功能入口"}];
+const features = [{"id": "qa", "title": "校园问答", "subtitle": "CAMPUS Q&A", "tag": "关于西邮，从这里问起", "description": "入学指南 · 校园生活 · 办事流程", "src": "/assets/feature-qa.png", "alt": "校园问答功能入口"}, {"id": "ppt", "title": "课件解读", "subtitle": "STUDY COMPANION", "tag": "把难点，一页页读懂", "description": "上传 PPTX · 章节梳理 · 难点解释", "src": "/assets/feature-ppt.png", "alt": "课件解读功能入口"}, {"id": "intel", "title": "校园情报", "subtitle": "CAMPUS RADAR", "tag": "不错过，值得关注的事", "description": "校园通知 · 活动时间 · 报名截止", "src": "/assets/feature-intel.png", "alt": "校园情报功能入口"}, {"id": "post", "title": "校园帖子", "subtitle": "CAMPUS BOARD", "tag": "写下来，让同学看见", "description": "AI 写帖 · 公开发布 · 点赞评论 · 私聊发帖人", "src": "/assets/feature-post.png", "alt": "校园帖子功能入口"}, {"id": "market", "title": "二手集市", "subtitle": "SECOND LIFE", "tag": "闲置，也有新的故事", "description": "浏览闲置 · 发布物品 · 联系卖家", "src": "/assets/feature-market.png", "alt": "二手集市功能入口"}, {"id": "social", "title": "同学私聊", "subtitle": "MY SPACE", "tag": "你的校园足迹，都在这里", "description": "浏览历史 · 我的商品 · 想要的 · 帖子 · 私聊", "src": "/assets/feature-chats.png", "alt": "我的功能入口"}];
 let currentFeature = 0;
 const drafts = {};
 const prompts = [
@@ -972,14 +972,24 @@ const prompts = [
  ['最近有哪些校园通知？','有哪些活动还可以报名？','帮我梳理通知中的截止时间'],
  ['帮我写一条找自习搭子的帖子','帮我写一条失物招领帖子','帮我写一条活动组队帖子']
 ];
-window.goHome = function(){ document.getElementById('portal').hidden=false;document.getElementById('workspace').hidden=true;const myPage=document.getElementById('myPage');if(myPage)myPage.hidden=true;window.scrollTo({top:0,behavior:'smooth'}); };
+window.goHome = function(){ document.getElementById('portal').hidden=false;document.getElementById('workspace').hidden=true;const myPage=document.getElementById('myPage');if(myPage)myPage.hidden=true;const publicPage=document.getElementById('publicFeedPage');if(publicPage)publicPage.hidden=true;window.scrollTo({top:0,behavior:'smooth'}); };
 window.enterFeature = function(index){
+ if(index===3){openPublicFeed();return;}
  if(index===4){state.marketTab='browse';openMarket();return;}if(index===5){openSocial();return;}
  if(state.sending){toast('请等待当前回答完成后再切换功能');return;}
  switchConversationFeature(index);
  currentFeature=index;const f=features[index];document.getElementById('portal').hidden=true;document.getElementById('workspace').hidden=false;
  document.getElementById('workspaceLabel').textContent=f.title;document.getElementById('workspaceTitle').textContent=f.tag;document.getElementById('workspaceEyebrow').textContent=f.subtitle;
  els.input.placeholder=prompts[index][0];els.pptUploadBtn.hidden=index!==1;renderMessages();renderPptBar();autoResize();window.scrollTo({top:0,behavior:'smooth'});
+};
+window.openPostWriter=function(){
+ const index=3;
+ if(state.sending){toast('请等待当前回答完成后再切换功能');return;}
+ switchConversationFeature(index);currentFeature=index;
+ const publicPage=document.getElementById('publicFeedPage');if(publicPage)publicPage.hidden=true;
+ document.getElementById('portal').hidden=true;document.getElementById('workspace').hidden=false;
+ document.getElementById('workspaceLabel').textContent='帖子创作';document.getElementById('workspaceTitle').textContent='把想说的话，写成一条好帖子';document.getElementById('workspaceEyebrow').textContent='POST WRITER';
+ els.input.placeholder=prompts[index][0];els.pptUploadBtn.hidden=true;renderMessages();renderPptBar();autoResize();window.scrollTo({top:0,behavior:'smooth'});
 };
 window.featureEmptyState=function(){
  const f=features[currentFeature];const wrap=el('div','empty feature-empty');const icon=el('img');icon.src=f.src;icon.alt='';wrap.appendChild(icon);wrap.appendChild(el('h2',null,f.tag));wrap.appendChild(el('p',null,f.description));

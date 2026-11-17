@@ -288,6 +288,14 @@ def write_wanted(items):
     write_store("wanted", "wanted", items)
 
 
+def load_public_posts():
+    return [item for item in read_store("public_posts", "posts") if isinstance(item, dict) and item.get("id")]
+
+
+def write_public_posts(items):
+    write_store("public_posts", "posts", items)
+
+
 PHONE_RE = re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)")
 STUDENT_RE = re.compile(r"(?:学号|宿舍号|宿舍|寝室号|寝室|楼号|房间号)\s*[:：]?\s*[A-Za-z0-9\-]{2,20}")
 SOCIAL_RE = re.compile(r"(?:QQ|qq|微信|WeChat|wechat|VX|vx)\s*[:：]?\s*[A-Za-z0-9_\-]{4,24}")
@@ -1078,6 +1086,38 @@ def my_dashboard_payload(user):
     }
 
 
+def public_comment_view(comment, viewer=None):
+    viewer_id = viewer.get("id") if viewer else ""
+    return {
+        "id": comment.get("id", ""),
+        "author_name": user_name(comment.get("owner_id", "")),
+        "body": comment.get("body", ""),
+        "created_at": comment.get("created_at", ""),
+        "is_mine": bool(viewer_id and viewer_id == comment.get("owner_id")),
+    }
+
+
+def public_post_view(post, viewer=None):
+    viewer_id = viewer.get("id") if viewer else ""
+    liked_by = [item for item in post.get("liked_by", []) if isinstance(item, str)]
+    comments = [item for item in post.get("comments", []) if isinstance(item, dict) and item.get("id")]
+    return {
+        "id": post.get("id", ""),
+        "title": post.get("title", ""),
+        "body": post.get("body", ""),
+        "post_type": post.get("post_type", ""),
+        "author_id": post.get("owner_id", ""),
+        "author_name": user_name(post.get("owner_id", "")),
+        "created_at": post.get("created_at", ""),
+        "updated_at": post.get("updated_at", ""),
+        "is_mine": bool(viewer_id and viewer_id == post.get("owner_id")),
+        "like_count": len(liked_by),
+        "liked": bool(viewer_id and viewer_id in liked_by),
+        "comment_count": len(comments),
+        "comments": [public_comment_view(item, viewer) for item in comments[-50:]],
+    }
+
+
 def self_conversation_view(conversation, viewer):
     other_id = conversation.get("seller_id") if viewer["id"] == conversation.get("buyer_id") else conversation.get("buyer_id")
     product = next((item for item in load_products() if item["id"] == conversation.get("product_id")), None)
@@ -1435,6 +1475,7 @@ def lan_ip_candidates():
 
 def admin_overview_payload():
     cfg = config()
+    users = load_users()
     notices = [notice_view(item) for item in load_notices()]
     products = load_products()
     reports = load_reports()
@@ -1443,6 +1484,7 @@ def admin_overview_payload():
         "ai_configured": bool(cfg["api_key"]),
         "model": cfg["model"],
         "base_url": cfg["base_url"],
+        "registered_users": sum(1 for user in users if user.get("account")),
         "material_count": len(load_materials()),
         "notice_count": len(notices),
         "notice_ended": ended,
@@ -1691,6 +1733,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/me/dashboard":
                 self.handle_my_dashboard()
                 return
+            if path == "/api/posts":
+                self.handle_list_public_posts()
+                return
             if path == "/api/materials":
                 self.require_admin()
                 materials = load_materials()
@@ -1867,6 +1912,17 @@ class Handler(BaseHTTPRequestHandler):
             if match:
                 self.handle_add_wanted(match.group(1))
                 return
+            if path == "/api/posts":
+                self.handle_create_public_post()
+                return
+            match = re.match(r"^/api/posts/([A-Za-z0-9]+)/like$", path)
+            if match:
+                self.handle_toggle_public_like(match.group(1))
+                return
+            match = re.match(r"^/api/posts/([A-Za-z0-9]+)/comments$", path)
+            if match:
+                self.handle_create_public_comment(match.group(1))
+                return
             if path == "/api/market/conversations":
                 self.handle_create_conversation()
                 return
@@ -1932,6 +1988,14 @@ class Handler(BaseHTTPRequestHandler):
                 match = re.match(r"^/api/market/products/([A-Za-z0-9]+)/wanted$", path)
                 if match:
                     self.handle_remove_wanted(match.group(1))
+                    return
+                match = re.match(r"^/api/posts/([A-Za-z0-9]+)$", path)
+                if match:
+                    self.handle_delete_public_post(match.group(1))
+                    return
+                match = re.match(r"^/api/posts/([A-Za-z0-9]+)/comments/([A-Za-z0-9]+)$", path)
+                if match:
+                    self.handle_delete_public_comment(match.group(1), match.group(2))
                     return
                 self.send_error_json(404, "not_found", "接口不存在")
                 return
@@ -2514,6 +2578,139 @@ class Handler(BaseHTTPRequestHandler):
         if viewer:
             item["is_wanted"] = is_product_wanted(viewer["id"], product_id)
         self.send_json(200, {"product": item})
+
+    def handle_list_public_posts(self):
+        viewer = self.current_user(create=False)
+        posts = load_public_posts()
+        posts.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+        self.send_json(
+            200,
+            {
+                "posts": [public_post_view(item, viewer) for item in posts[:100]],
+                "count": len(posts),
+            },
+        )
+
+    def handle_create_public_post(self):
+        user = self.require_user()
+        data = self.read_json()
+        title = str(data.get("title", "")).strip()
+        body = str(data.get("body", "")).strip()
+        post_type = str(data.get("post_type", "")).strip() or "校园帖子"
+        if not title:
+            raise ValueError("请填写帖子标题")
+        if not body:
+            raise ValueError("请填写帖子正文")
+        if len(title) > 80:
+            raise ValueError("标题不能超过 80 字")
+        if len(body) > 3000:
+            raise ValueError("正文不能超过 3000 字")
+        title, title_changed = scrub_public_text(title)
+        body, body_changed = scrub_public_text(body)
+        if not title or not body:
+            raise ValueError("标题或正文在隐去个人信息后为空，请修改后再发布")
+        post = {
+            "id": uuid.uuid4().hex[:12],
+            "owner_id": user["id"],
+            "title": title,
+            "body": body,
+            "post_type": post_type[:30],
+            "created_at": time.strftime("%Y-%m-%d %H:%M"),
+            "updated_at": time.strftime("%Y-%m-%d %H:%M"),
+            "liked_by": [],
+            "comments": [],
+        }
+        with LOCK:
+            posts = load_public_posts()
+            posts.append(post)
+            write_public_posts(posts)
+        item = public_post_view(post, user)
+        item["privacy_applied"] = bool(title_changed or body_changed)
+        self.send_json(200, {"post": item, "count": len(posts)})
+
+    def handle_delete_public_post(self, post_id):
+        user = self.require_user()
+        with LOCK:
+            posts = load_public_posts()
+            post = next((item for item in posts if item.get("id") == post_id), None)
+            if not post:
+                self.send_error_json(404, "not_found", "帖子不存在或已被删除")
+                return
+            if post.get("owner_id") != user["id"]:
+                self.send_error_json(403, "forbidden", "只能删除自己发布的帖子")
+                return
+            remaining = [item for item in posts if item.get("id") != post_id]
+            write_public_posts(remaining)
+        self.send_json(200, {"ok": True, "count": len(remaining)})
+
+    def handle_toggle_public_like(self, post_id):
+        user = self.require_user()
+        with LOCK:
+            posts = load_public_posts()
+            post = next((item for item in posts if item.get("id") == post_id), None)
+            if not post:
+                self.send_error_json(404, "not_found", "帖子不存在或已被删除")
+                return
+            liked = [item for item in post.get("liked_by", []) if isinstance(item, str)]
+            if user["id"] in liked:
+                liked.remove(user["id"])
+            else:
+                liked.append(user["id"])
+            post["liked_by"] = liked
+            write_public_posts(posts)
+        self.send_json(200, {"liked": user["id"] in liked, "like_count": len(liked)})
+
+    def handle_create_public_comment(self, post_id):
+        user = self.require_user()
+        data = self.read_json()
+        body = str(data.get("body", "")).strip()
+        if not body:
+            raise ValueError("请填写评论内容")
+        if len(body) > 500:
+            raise ValueError("评论不能超过 500 字")
+        body, changed = scrub_public_text(body)
+        if not body:
+            raise ValueError("评论在隐去个人信息后为空，请修改后再发送")
+        comment = {
+            "id": uuid.uuid4().hex[:10],
+            "owner_id": user["id"],
+            "body": body,
+            "created_at": time.strftime("%Y-%m-%d %H:%M"),
+        }
+        with LOCK:
+            posts = load_public_posts()
+            post = next((item for item in posts if item.get("id") == post_id), None)
+            if not post:
+                self.send_error_json(404, "not_found", "帖子不存在或已被删除")
+                return
+            comments = [item for item in post.get("comments", []) if isinstance(item, dict)]
+            comments.append(comment)
+            post["comments"] = comments
+            write_public_posts(posts)
+        item = public_comment_view(comment, user)
+        item["privacy_applied"] = bool(changed)
+        self.send_json(200, {"comment": item, "comment_count": len(comments)})
+
+    def handle_delete_public_comment(self, post_id, comment_id):
+        user = self.require_user()
+        with LOCK:
+            posts = load_public_posts()
+            post = next((item for item in posts if item.get("id") == post_id), None)
+            if not post:
+                self.send_error_json(404, "not_found", "帖子不存在或已被删除")
+                return
+            comments = [item for item in post.get("comments", []) if isinstance(item, dict)]
+            comment = next((item for item in comments if item.get("id") == comment_id), None)
+            if not comment:
+                self.send_error_json(404, "not_found", "评论不存在或已被删除")
+                return
+            if comment.get("owner_id") != user["id"] and post.get("owner_id") != user["id"]:
+                self.send_error_json(403, "forbidden", "只能删除自己的评论")
+                return
+            remaining = [item for item in comments if item.get("id") != comment_id]
+            post["comments"] = remaining
+            write_public_posts(posts)
+        self.send_json(200, {"ok": True, "comment_count": len(remaining)})
 
     def handle_my_dashboard(self):
         user = self.require_user()

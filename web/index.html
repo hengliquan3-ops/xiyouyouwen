@@ -72,6 +72,30 @@
     </div>
   </section>
 
+  <section id="publicFeedPage" class="public-feed-page" hidden aria-label="公共帖子">
+    <div class="public-feed-hero">
+      <button class="my-back" id="publicFeedBack" type="button"><span aria-hidden="true">←</span> 返回首页</button>
+      <div class="public-feed-copy">
+        <p class="eyebrow">PUBLIC BOARD · 公共区</p>
+        <h1>校园帖子</h1>
+        <p>所有人可见的校园互助、组队、失物招领与经验分享。</p>
+      </div>
+      <div class="public-feed-actions">
+        <span class="public-live"><span aria-hidden="true"></span>公开可见</span>
+        <button class="ghost-btn public-feed-ai" id="publicPostAi" type="button">AI 帮我写</button>
+        <button class="primary-btn" id="publicPostCreate" type="button">发布帖子</button>
+      </div>
+      <div class="public-feed-mark" aria-hidden="true">帖</div>
+    </div>
+    <div class="public-feed-body">
+      <div class="public-feed-toolbar">
+        <div><strong id="publicPostCount">0 条公开帖子</strong><span>按发布时间排序 · 所有人可见</span></div>
+        <button class="ghost-btn" id="publicFeedRefresh" type="button">刷新</button>
+      </div>
+      <div class="public-post-list" id="publicPostList"></div>
+    </div>
+  </section>
+
 <div id="workspace" hidden><div class="workspace-nav"><button onclick="goHome()">← 返回功能首页</button><span id="workspaceLabel">校园问答</span><button id="newConversation">＋ 新对话</button></div><main class="layout">
     <section class="chat-shell" aria-label="西邮有问聊天">
       <div class="chat-head">
@@ -260,6 +284,32 @@
         <strong>演示两个用户</strong>
         <p>用另一个浏览器窗口或无痕窗口打开同一地址，会自动获得另一个匿名身份。两个窗口可以互相私聊，其他身份看不到你们的消息。</p>
       </div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet small" id="publicPostDialog" aria-labelledby="publicPostTitle">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div>
+          <p class="eyebrow">公共发帖区</p>
+          <h2 id="publicPostTitle">公开发布帖子</h2>
+        </div>
+        <button class="close-btn" type="button" data-close aria-label="关闭">×</button>
+      </header>
+      <p class="sheet-desc">发布后所有人都能看到。请勿填写手机号、学号、宿舍或社交账号；需要联系方式时建议写“有意者私聊”。</p>
+      <label class="field"><span>帖子类型</span>
+        <select id="publicPostType">
+          <option>找搭子</option><option>失物招领</option><option>寻物启事</option>
+          <option>活动组队</option><option>校园求助</option><option>经验分享</option><option>闲置转让</option>
+        </select>
+      </label>
+      <label class="field"><span>标题</span><input id="publicPostContentTitle" type="text" maxlength="80" placeholder="例如：找周六下午自习搭子"></label>
+      <label class="field"><span>正文</span><textarea id="publicPostBody" rows="7" maxlength="3000" placeholder="写清楚时间、地点和需要对方知道的信息。缺少的信息可以标【待补充】。"></textarea></label>
+      <div class="form-foot">
+        <span class="form-msg" id="publicPostMsg"></span>
+        <button class="primary-btn" type="button" id="publicPostConfirm">确认公开发布</button>
+      </div>
+      <p class="form-msg small-note">确认后会立即出现在公共区，发布者可以在自己的帖子上删除。</p>
     </div>
   </dialog>
 

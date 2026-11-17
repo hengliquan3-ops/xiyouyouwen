@@ -954,12 +954,12 @@ const features = [{
   "alt": "校园情报功能入口"
 }, {
   "id": "post",
-  "title": "帖子创作",
-  "subtitle": "WORDS THAT CONNECT",
-  "tag": "让你的想法，好好被看见",
-  "description": "找搭子 · 失物招领 · 活动组队",
+  "title": "校园帖子",
+  "subtitle": "CAMPUS BOARD",
+  "tag": "写下来，让同学看见",
+  "description": "AI 写帖 · 公开发布 · 点赞评论 · 私聊发帖人",
   "src": "/assets/feature-post.png",
-  "alt": "帖子创作功能入口"
+  "alt": "校园帖子功能入口"
 }, {
   "id": "market",
   "title": "二手集市",
@@ -976,6 +976,7 @@ const features = [{
   "description": "浏览历史 · 我的商品 · 想要的 · 帖子 · 私聊",
   "src": "/assets/feature-chats.png",
   "alt": "我的功能入口"
+
 }];
 let currentFeature = 0;
 const drafts = {};
@@ -985,12 +986,18 @@ window.goHome = function () {
   document.getElementById('workspace').hidden = true;
   const myPage = document.getElementById('myPage');
   if (myPage) myPage.hidden = true;
+  const publicPage = document.getElementById('publicFeedPage');
+  if (publicPage) publicPage.hidden = true;
   window.scrollTo({
     top: 0,
     behavior: 'smooth'
   });
 };
 window.enterFeature = function (index) {
+  if (index === 3) {
+    openPublicFeed();
+    return;
+  }
   if (index === 4) {
     state.marketTab = 'browse';
     openMarket();
@@ -1006,6 +1013,8 @@ window.enterFeature = function (index) {
   }
   switchConversationFeature(index);
   currentFeature = index;
+  const publicPage = document.getElementById('publicFeedPage');
+  if (publicPage) publicPage.hidden = true;
   const f = features[index];
   document.getElementById('portal').hidden = true;
   document.getElementById('workspace').hidden = false;
@@ -1014,6 +1023,31 @@ window.enterFeature = function (index) {
   document.getElementById('workspaceEyebrow').textContent = f.subtitle;
   els.input.placeholder = prompts[index][0];
   els.pptUploadBtn.hidden = index !== 1;
+  renderMessages();
+  renderPptBar();
+  autoResize();
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+};
+window.openPostWriter = function () {
+  const index = 3;
+  if (state.sending) {
+    toast('请等待当前回答完成后再切换功能');
+    return;
+  }
+  switchConversationFeature(index);
+  currentFeature = index;
+  const publicPage = document.getElementById('publicFeedPage');
+  if (publicPage) publicPage.hidden = true;
+  document.getElementById('portal').hidden = true;
+  document.getElementById('workspace').hidden = false;
+  document.getElementById('workspaceLabel').textContent = '帖子创作';
+  document.getElementById('workspaceTitle').textContent = '把想说的话，写成一条好帖子';
+  document.getElementById('workspaceEyebrow').textContent = 'POST WRITER';
+  els.input.placeholder = prompts[index][0];
+  els.pptUploadBtn.hidden = true;
   renderMessages();
   renderPptBar();
   autoResize();

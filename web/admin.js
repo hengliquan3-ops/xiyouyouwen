@@ -24,7 +24,7 @@ function cacheElements() {
     "adminNav", "sectionTitle", "adminBadge", "logoutSide", "logoutTop", "logoutBottom",
     "backToStudentTop", "backToStudentSide", "adminPublicWarning",
     "sectionOverview", "sectionMaterials", "sectionNotices", "sectionReports", "sectionAi", "sectionSecurity",
-    "statMaterials", "statNotices", "statEnded", "statProducts", "statReports", "statAI", "statModel",
+    "statMaterials", "statNotices", "statEnded", "statProducts", "statReports", "statUsers", "statAI", "statModel",
     "materialForm", "matName", "matContent", "matSubmit", "matFormMsg", "materialList", "matListCount",
     "noticeForm", "noticeTitle", "noticeSource", "noticePublished", "noticeEvent", "noticeDeadline",
     "noticeBody", "noticeFormMsg", "noticeSubmit", "noticeList", "noticeListCount",
@@ -275,6 +275,7 @@ function switchSection(section) {
 async function loadOverview() {
   try {
     const data = await api("/api/admin/overview");
+    els.statUsers.textContent = String(data.registered_users || 0);
     els.statMaterials.textContent = String(data.material_count || 0);
     els.statNotices.textContent = String(data.notice_count || 0);
     els.statEnded.textContent = String(data.notice_ended || 0);

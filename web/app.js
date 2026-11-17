@@ -31,6 +31,10 @@ const state = {
   myDashboard: null,
   myLoading: false,
   myError: "",
+  publicPosts: [],
+  publicLoading: false,
+  publicError: "",
+  publicOpenComments: new Set(),
 };
 
 const els = {};
@@ -87,6 +91,8 @@ function cacheElements() {
     "identityDialog", "identityName", "identityMsg", "identitySave",
     "myPage", "myTabs", "myContent", "myName", "myIdentityLine", "myEditName", "myPublishBtn", "myBack",
     "myCountHistory", "myCountProducts", "myCountWanted", "myCountPosts", "myCountChats",
+    "publicFeedPage", "publicFeedBack", "publicPostCreate", "publicFeedRefresh", "publicPostCount", "publicPostList", "publicPostAi",
+    "publicPostDialog", "publicPostType", "publicPostContentTitle", "publicPostBody", "publicPostMsg", "publicPostConfirm",
     "settingsDialog", "settingsForm", "settingKey", "settingBase", "settingModel", "settingsMsg",
     "settingsStatus", "settingsDot", "settingsSave", "clearKeyBtn",
   ];
@@ -156,6 +162,15 @@ function bindEvents() {
   if (els.myBack) els.myBack.addEventListener("click", () => {
     if (typeof goHome === "function") goHome();
   });
+  if (els.publicFeedBack) els.publicFeedBack.addEventListener("click", () => {
+    if (typeof goHome === "function") goHome();
+  });
+  if (els.publicPostCreate) els.publicPostCreate.addEventListener("click", () => openPublicPostComposer());
+  if (els.publicPostAi) els.publicPostAi.addEventListener("click", () => {
+    if (typeof window.openPostWriter === "function") window.openPostWriter();
+  });
+  if (els.publicFeedRefresh) els.publicFeedRefresh.addEventListener("click", () => loadPublicPosts());
+  if (els.publicPostConfirm) els.publicPostConfirm.addEventListener("click", submitPublicPost);
   document.querySelectorAll("[data-my-stat]").forEach((button) => {
     button.addEventListener("click", () => switchMyTab(button.dataset.myStat));
   });
@@ -187,7 +202,7 @@ function bindEvents() {
   if (els.settingsForm) els.settingsForm.addEventListener("submit", saveSettings);
   if (els.clearKeyBtn) els.clearKeyBtn.addEventListener("click", clearKey);
 
-  [els.adminDialog, els.marketDialog, els.productDialog, els.publishDialog, els.reportDialog, els.identityDialog, els.settingsDialog].filter(Boolean).forEach((dialog) => {
+  [els.adminDialog, els.marketDialog, els.productDialog, els.publishDialog, els.reportDialog, els.identityDialog, els.publicPostDialog, els.settingsDialog].filter(Boolean).forEach((dialog) => {
     dialog.addEventListener("click", (event) => {
       if (event.target === dialog) dialog.close();
     });
@@ -294,6 +309,9 @@ async function init() {
   }
   if (params.get("my") === "1") {
     window.setTimeout(openMyPage, 300);
+  }
+  if (params.get("feed") === "1") {
+    window.setTimeout(openPublicFeed, 300);
   }
 }
 
@@ -724,6 +742,14 @@ function renderPost(container, data, messageId) {
   copy.type = "button";
   copy.dataset.copyMsg = messageId;
   actions.appendChild(copy);
+  const publicBtn = el("button", "ghost-btn", "发布到公共区");
+  publicBtn.type = "button";
+  publicBtn.addEventListener("click", () => openPublicPostComposer({
+    title: data.title || "",
+    body: data.body || "",
+    post_type: data.post_type || "",
+  }));
+  actions.appendChild(publicBtn);
   const saleText = `${data.post_type || ""}${data.title || ""}`;
   if (/闲置|转让|出售|卖/.test(saleText)) {
     const market = el("button", "ghost-btn", "发布到校园集市");
@@ -1303,6 +1329,8 @@ async function openMyPage() {
   if (portal) portal.hidden = true;
   if (workspace) workspace.hidden = true;
   els.myPage.hidden = false;
+  const publicPage = document.getElementById("publicFeedPage");
+  if (publicPage) publicPage.hidden = true;
   updateMyIdentityLine();
   switchMyTab(state.myTab, false);
   await loadMyDashboard();
@@ -1502,12 +1530,342 @@ function myPostCard(post) {
 
 ${post.body || ""}`.trim(), copy));
   foot.appendChild(copy);
+  const publicBtn = el("button", "ghost-btn", "发布到公共区");
+  publicBtn.type = "button";
+  publicBtn.addEventListener("click", () => openPublicPostComposer({
+    title: post.title || "",
+    body: post.body || "",
+    post_type: post.post_type || "",
+  }));
+  foot.appendChild(publicBtn);
   card.appendChild(foot);
   return card;
 }
 
 async function refreshMyIfOpen() {
   if (els.myPage && !els.myPage.hidden) await loadMyDashboard();
+}
+
+async function openPublicFeed() {
+  if (!els.publicFeedPage) return;
+  const portal = document.getElementById("portal");
+  const workspace = document.getElementById("workspace");
+  const myPage = document.getElementById("myPage");
+  if (portal) portal.hidden = true;
+  if (workspace) workspace.hidden = true;
+  if (myPage) myPage.hidden = true;
+  els.publicFeedPage.hidden = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  await loadPublicPosts();
+}
+
+async function loadPublicPosts() {
+  if (!els.publicPostList) return;
+  state.publicLoading = true;
+  state.publicError = "";
+  renderPublicPosts();
+  try {
+    const data = await api("/api/posts");
+    state.publicPosts = Array.isArray(data.posts) ? data.posts : [];
+  } catch (error) {
+    state.publicPosts = [];
+    state.publicError = error.message;
+  } finally {
+    state.publicLoading = false;
+    renderPublicPosts();
+  }
+}
+
+function renderPublicPosts() {
+  if (!els.publicPostList) return;
+  els.publicPostList.innerHTML = "";
+  if (els.publicPostCount) {
+    els.publicPostCount.textContent = state.publicLoading
+      ? "正在加载…"
+      : `${state.publicPosts.length} 条公开帖子`;
+  }
+  if (state.publicLoading) {
+    els.publicPostList.appendChild(el("div", "public-feed-empty", "正在加载公共帖子…"));
+    return;
+  }
+  if (state.publicError) {
+    const wrap = el("div", "public-feed-empty error");
+    wrap.appendChild(el("p", null, state.publicError));
+    const retry = el("button", "ghost-btn", "重试");
+    retry.type = "button";
+    retry.addEventListener("click", loadPublicPosts);
+    wrap.appendChild(retry);
+    els.publicPostList.appendChild(wrap);
+    return;
+  }
+  if (!state.publicPosts.length) {
+    els.publicPostList.appendChild(el("div", "public-feed-empty", "公共区还没有帖子。点右上角“发布帖子”，让全校同学看到你的第一条消息。"));
+    return;
+  }
+  state.publicPosts.forEach((post) => els.publicPostList.appendChild(publicPostCard(post)));
+}
+
+function publicPostCard(post) {
+  const card = el("article", "public-post-card");
+  const head = el("div", "public-post-head");
+  const who = el("div", "public-post-author");
+  const authorButton = el("button", "public-author-link");
+  authorButton.type = "button";
+  authorButton.appendChild(el("strong", null, post.author_name || "同学"));
+  authorButton.appendChild(el("span", null, post.is_mine ? "我发布的" : "点击发帖人进入私聊"));
+  if (!post.is_mine && post.author_id) {
+    authorButton.addEventListener("click", () => openDirectChat(post.author_id, post.author_name));
+  } else {
+    authorButton.disabled = true;
+  }
+  who.appendChild(authorButton);
+  who.appendChild(el("span", "public-post-time", post.created_at || ""));
+  head.appendChild(who);
+  if (post.post_type) head.appendChild(el("span", "public-post-type", post.post_type));
+  card.appendChild(head);
+  card.appendChild(el("h3", "public-post-title", post.title || "未命名帖子"));
+  card.appendChild(el("p", "public-post-body", post.body || ""));
+
+  const actions = el("div", "public-post-actions");
+  const like = el("button", `public-action${post.liked ? " active" : ""}`, undefined);
+  like.type = "button";
+  like.title = post.liked ? "取消点赞" : "点赞";
+  like.appendChild(el("span", "public-action-icon", post.liked ? "♥" : "♡"));
+  like.appendChild(el("span", "public-action-text", `点赞 ${post.like_count || 0}`));
+  like.addEventListener("click", () => togglePublicLike(post, like));
+  actions.appendChild(like);
+
+  const commentButton = el("button", "public-action", undefined);
+  commentButton.type = "button";
+  commentButton.appendChild(el("span", "public-action-icon", "💬"));
+  commentButton.appendChild(el("span", "public-action-text", `评论 ${post.comment_count || 0}`));
+  actions.appendChild(commentButton);
+
+  if (!post.is_mine && post.author_id) {
+    const chat = el("button", "public-action", undefined);
+    chat.type = "button";
+    chat.appendChild(el("span", "public-action-icon", "✉"));
+    chat.appendChild(el("span", "public-action-text", "私聊发帖人"));
+    chat.addEventListener("click", () => openDirectChat(post.author_id, post.author_name));
+    actions.appendChild(chat);
+  }
+  card.appendChild(actions);
+
+  const commentsBox = buildPublicComments(post, commentButton);
+  commentButton.addEventListener("click", () => {
+    commentsBox.hidden = !commentsBox.hidden;
+    commentButton.classList.toggle("active", !commentsBox.hidden);
+    if (commentsBox.hidden) state.publicOpenComments.delete(post.id);
+    else {
+      state.publicOpenComments.add(post.id);
+      const input = commentsBox.querySelector(".public-comment-input");
+      if (input) input.focus();
+    }
+  });
+  commentButton.classList.toggle("active", !commentsBox.hidden);
+  card.appendChild(commentsBox);
+
+  const foot = el("div", "public-post-foot");
+  foot.appendChild(el("span", "public-post-public", post.is_mine ? "我发布的 · 所有人可见" : "公开帖子 · 所有人可见"));
+  if (post.is_mine) {
+    const remove = el("button", "ghost-btn danger", "删除帖子");
+    remove.type = "button";
+    remove.addEventListener("click", () => deletePublicPost(post.id));
+    foot.appendChild(remove);
+  }
+  card.appendChild(foot);
+  return card;
+}
+
+function buildPublicComments(post, countButton) {
+  const box = el("div", "public-post-comments");
+  box.hidden = !state.publicOpenComments.has(post.id);
+  const list = el("div", "public-comment-list");
+  renderPublicCommentList(post, list, countButton);
+  box.appendChild(list);
+  const form = el("form", "public-comment-form");
+  const input = el("input", "public-comment-input");
+  input.type = "text";
+  input.maxLength = 500;
+  input.placeholder = "写评论（请勿填写手机号、学号等个人信息）";
+  input.setAttribute("aria-label", "评论内容");
+  const send = el("button", "primary-btn", "发送");
+  send.type = "submit";
+  form.appendChild(input);
+  form.appendChild(send);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitPublicComment(post, input, list, countButton);
+  });
+  box.appendChild(form);
+  return box;
+}
+
+function renderPublicCommentList(post, list, countButton) {
+  list.innerHTML = "";
+  const comments = Array.isArray(post.comments) ? post.comments : [];
+  if (countButton) {
+    const text = countButton.querySelector(".public-action-text");
+    if (text) text.textContent = `评论 ${post.comment_count || comments.length}`;
+  }
+  if (!comments.length) {
+    list.appendChild(el("p", "public-comment-empty", "还没有评论，来说两句吧。"));
+    return;
+  }
+  comments.forEach((comment) => {
+    const row = el("div", "public-comment");
+    const meta = el("div", "public-comment-meta");
+    meta.appendChild(el("strong", null, comment.author_name || "同学"));
+    meta.appendChild(el("span", null, comment.created_at || ""));
+    row.appendChild(meta);
+    row.appendChild(el("p", "public-comment-body", comment.body || ""));
+    if (comment.is_mine || post.is_mine) {
+      const remove = el("button", "public-comment-delete", "删除");
+      remove.type = "button";
+      remove.addEventListener("click", () => deletePublicComment(post, comment, list, countButton));
+      row.appendChild(remove);
+    }
+    list.appendChild(row);
+  });
+}
+
+async function togglePublicLike(post, button) {
+  if (button.disabled) return;
+  button.disabled = true;
+  try {
+    const data = await api(`/api/posts/${encodeURIComponent(post.id)}/like`, {
+      method: "POST",
+      body: "{}",
+    });
+    post.liked = Boolean(data.liked);
+    post.like_count = Number(data.like_count) || 0;
+    button.classList.toggle("active", post.liked);
+    button.title = post.liked ? "取消点赞" : "点赞";
+    const icon = button.querySelector(".public-action-icon");
+    const text = button.querySelector(".public-action-text");
+    if (icon) icon.textContent = post.liked ? "♥" : "♡";
+    if (text) text.textContent = `点赞 ${post.like_count}`;
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function submitPublicComment(post, input, list, countButton) {
+  const body = input.value.trim();
+  if (!body) {
+    input.focus();
+    return;
+  }
+  const form = input.closest("form");
+  const send = form ? form.querySelector("button") : null;
+  if (send) send.disabled = true;
+  try {
+    const data = await api(`/api/posts/${encodeURIComponent(post.id)}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    });
+    post.comments = Array.isArray(post.comments) ? post.comments : [];
+    post.comments.push(data.comment);
+    post.comment_count = Number(data.comment_count) || post.comments.length;
+    input.value = "";
+    renderPublicCommentList(post, list, countButton);
+    toast(data.comment && data.comment.privacy_applied ? "评论已发送，个人信息已自动隐去" : "评论已发送");
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    if (send) send.disabled = false;
+  }
+}
+
+async function deletePublicComment(post, comment, list, countButton) {
+  if (!window.confirm("确认删除这条评论吗？")) return;
+  try {
+    const data = await api(`/api/posts/${encodeURIComponent(post.id)}/comments/${encodeURIComponent(comment.id)}`, {
+      method: "DELETE",
+    });
+    post.comments = (Array.isArray(post.comments) ? post.comments : []).filter((item) => item.id !== comment.id);
+    post.comment_count = Number(data.comment_count) || post.comments.length;
+    renderPublicCommentList(post, list, countButton);
+    toast("评论已删除");
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function openDirectChat(userId, name) {
+  if (!userId) return;
+  try {
+    const data = await api("/api/social", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, action: "message" }),
+    });
+    if (els.publicPostDialog && els.publicPostDialog.open) els.publicPostDialog.close();
+    await openChat(data.conversation);
+    toast(`已打开和 ${name || "同学"} 的私聊`);
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+function openPublicPostComposer(prefill = {}) {
+  if (!els.publicPostDialog || !els.publicPostType) return;
+  const types = Array.from(els.publicPostType.options).map((option) => option.value);
+  const wanted = String(prefill.post_type || "").trim();
+  els.publicPostType.value = types.includes(wanted) ? wanted : types[0] || "找搭子";
+  els.publicPostContentTitle.value = String(prefill.title || "").slice(0, 80);
+  els.publicPostBody.value = String(prefill.body || "").slice(0, 3000);
+  els.publicPostMsg.className = "form-msg";
+  els.publicPostMsg.textContent = "";
+  els.publicPostConfirm.disabled = false;
+  els.publicPostDialog.showModal();
+}
+
+async function submitPublicPost() {
+  const title = els.publicPostContentTitle.value.trim();
+  const body = els.publicPostBody.value.trim();
+  const postType = els.publicPostType.value;
+  if (!title) {
+    els.publicPostMsg.className = "form-msg error";
+    els.publicPostMsg.textContent = "请填写帖子标题。";
+    return;
+  }
+  if (!body) {
+    els.publicPostMsg.className = "form-msg error";
+    els.publicPostMsg.textContent = "请填写帖子正文。";
+    return;
+  }
+  if (!window.confirm(`确认把这条帖子公开发布吗？发布后所有同学都能看到。\n\n${title}`)) return;
+  els.publicPostConfirm.disabled = true;
+  els.publicPostMsg.className = "form-msg";
+  els.publicPostMsg.textContent = "正在发布…";
+  try {
+    const data = await api("/api/posts", {
+      method: "POST",
+      body: JSON.stringify({ title, body, post_type: postType }),
+    });
+    els.publicPostDialog.close();
+    if (els.publicFeedPage && !els.publicFeedPage.hidden) await loadPublicPosts();
+    toast(data.post && data.post.privacy_applied ? "已公开发布，手机号等个人信息已自动隐去" : "已公开发布，所有人可见");
+  } catch (error) {
+    els.publicPostMsg.className = "form-msg error";
+    els.publicPostMsg.textContent = error.message;
+  } finally {
+    els.publicPostConfirm.disabled = false;
+  }
+}
+
+async function deletePublicPost(postId) {
+  if (!window.confirm("确认删除这条公开帖子吗？删除后所有同学都看不到了。")) return;
+  try {
+    await api(`/api/posts/${encodeURIComponent(postId)}`, { method: "DELETE" });
+    state.publicPosts = state.publicPosts.filter((item) => item.id !== postId);
+    renderPublicPosts();
+    toast("帖子已删除");
+  } catch (error) {
+    toast(error.message);
+  }
 }
 
 function openMarket() {
