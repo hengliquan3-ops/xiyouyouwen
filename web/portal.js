@@ -843,6 +843,7 @@ const CircularCarousel = ({
       alt: "",
       draggable: false,
       decoding: "async",
+      loading: "lazy",
       style: photoStyle
     }), gone && /*#__PURE__*/React.createElement("img", {
       key: `leaving-${leaving.id}`,
@@ -851,6 +852,7 @@ const CircularCarousel = ({
       alt: "",
       draggable: false,
       decoding: "async",
+      loading: "lazy",
       style: {
         ...photoStyle,
         animationDelay: `${Math.round(leaving.delays[index])}ms`
@@ -934,7 +936,7 @@ const features = [{
   "subtitle": "CAMPUS Q&A",
   "tag": "关于西邮，从这里问起",
   "description": "入学指南 · 校园生活 · 办事流程",
-  "src": "/assets/feature-qa.png",
+  "src": "/assets/feature-qa.webp",
   "alt": "校园问答功能入口"
 }, {
   "id": "ppt",
@@ -942,7 +944,7 @@ const features = [{
   "subtitle": "STUDY COMPANION",
   "tag": "把难点，一页页读懂",
   "description": "上传 PPTX · 章节梳理 · 难点解释",
-  "src": "/assets/feature-ppt.png",
+  "src": "/assets/feature-ppt.webp",
   "alt": "课件解读功能入口"
 }, {
   "id": "intel",
@@ -950,7 +952,7 @@ const features = [{
   "subtitle": "CAMPUS RADAR",
   "tag": "不错过，值得关注的事",
   "description": "校园通知 · 活动时间 · 报名截止",
-  "src": "/assets/feature-intel.png",
+  "src": "/assets/feature-intel.webp",
   "alt": "校园情报功能入口"
 }, {
   "id": "post",
@@ -958,7 +960,7 @@ const features = [{
   "subtitle": "CAMPUS BOARD",
   "tag": "写下来，让同学看见",
   "description": "AI 写帖 · 公开发布 · 点赞评论 · 私聊发帖人",
-  "src": "/assets/feature-post.png",
+  "src": "/assets/feature-post.webp",
   "alt": "校园帖子功能入口"
 }, {
   "id": "market",
@@ -966,7 +968,7 @@ const features = [{
   "subtitle": "SECOND LIFE",
   "tag": "闲置，也有新的故事",
   "description": "浏览闲置 · 发布物品 · 联系卖家",
-  "src": "/assets/feature-market.png",
+  "src": "/assets/feature-market.webp",
   "alt": "二手集市功能入口"
 }, {
   "id": "social",
@@ -974,7 +976,7 @@ const features = [{
   "subtitle": "MY SPACE",
   "tag": "你的校园足迹，都在这里",
   "description": "浏览历史 · 我的商品 · 想要的 · 帖子 · 私聊",
-  "src": "/assets/feature-chats.png",
+  "src": "/assets/feature-chats.webp",
   "alt": "我的功能入口"
 
 }];

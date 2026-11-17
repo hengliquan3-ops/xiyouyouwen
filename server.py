@@ -1549,7 +1549,8 @@ class Handler(BaseHTTPRequestHandler):
         if not path.is_file():
             self.send_json(404, {"error": "not_found", "message": "页面不存在"})
             return
-        self.send_bytes(path.read_bytes(), content_type)
+        cache = "no-store" if content_type.startswith("text/html") else "public, max-age=3600"
+        self.send_bytes(path.read_bytes(), content_type, cache)
 
     def read_json(self, max_bytes=3 * 1024 * 1024):
         try:
@@ -1795,8 +1796,8 @@ class Handler(BaseHTTPRequestHandler):
                 }.get(suffix, "application/octet-stream")
                 self.send_bytes(target.read_bytes(), content_type, "public, max-age=3600")
                 return
-            if path in ("/hero-title.js", "/TextType.css", "/vendor/gsap.min.js", "/portal.css", "/portal.js", "/CircularCarousel.css", "/vendor/react.min.js", "/vendor/react-dom.min.js") or re.fullmatch(r"/assets/feature-(qa|ppt|intel|post|market|chats)\.(svg|png)", path):
-                media = "image/png" if path.endswith(".png") else "image/svg+xml" if path.endswith(".svg") else ("text/css" if path.endswith(".css") else "application/javascript")
+            if path in ("/hero-title.js", "/TextType.css", "/vendor/gsap.min.js", "/portal.css", "/portal.js", "/CircularCarousel.css", "/vendor/react.min.js", "/vendor/react-dom.min.js") or re.fullmatch(r"/assets/feature-(qa|ppt|intel|post|market|chats)\.(svg|png|webp)", path):
+                media = "image/png" if path.endswith(".png") else "image/webp" if path.endswith(".webp") else "image/svg+xml" if path.endswith(".svg") else ("text/css" if path.endswith(".css") else "application/javascript")
                 self.send_file(path.lstrip("/"), media + "; charset=utf-8")
                 return
             if path in ("/", "/index.html"):
