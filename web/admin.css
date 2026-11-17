@@ -484,3 +484,28 @@
   font-size: 11.5px;
   line-height: 1.7;
 }
+/* Match the student portal's deep postal blue banner. */
+.admin-topbar {
+  background: #214e70;
+  color: #fff8ea;
+  border-bottom-color: #183d59;
+}
+.admin-topbar .brand-text h1 { color: #fff8ea; }
+.admin-topbar .brand-text p { color: #c4d4df; }
+.admin-topbar .logo { background: #386784; color: #fff8ea; box-shadow: none; }
+.admin-topbar .admin-mark { background: #edb774; color: #214e70; }
+.admin-topbar .ghost-btn {
+  background: transparent;
+  color: #fff8ea;
+  border-color: #7895aa;
+  text-decoration: none;
+}
+.admin-topbar .ghost-btn:hover { background: #386784; border-color: #edb774; }
+.admin-topbar a:focus-visible,
+.admin-nav-btn:focus-visible { outline: 3px solid #edb774; outline-offset: 3px; }
+.admin-nav-btn.active { background: #214e70; border-color: #214e70; box-shadow: inset 3px 0 #edb774; }
+.admin-nav-btn.active span { color: #fff8ea; }
+.admin-nav-btn.active small { color: #c4d4df; }
+
+/* Shared campus mascot for the student and admin headers. */
+.admin-topbar .admin-mascot { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 50%; object-fit: cover; }

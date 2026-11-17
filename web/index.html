@@ -7,20 +7,20 @@
   <meta name="description" content="西邮有问：西安邮电大学校园问答、PPTX 课件解读、校园情报、帖子创作与二手集市。">
   <title>西邮有问 · 校园生活有疑问，来这里问一问</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%2316406f'/%3E%3Ctext x='32' y='44' font-size='33' text-anchor='middle' fill='%23fbf7ec' font-family='serif'%3E%E9%82%AE%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/CircularCarousel.css"><link rel="stylesheet" href="/TextType.css"><link rel="stylesheet" href="/portal.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <div class="logo" aria-hidden="true">邮</div>
+      <button class="brand-home" onclick="goHome()" aria-label="返回功能首页"><img src="/assets/xiyou-mascot-head.jpg" alt="西邮有问吉祥物"></button>
       <div class="brand-text">
         <h1>西邮有问</h1>
-        <p>校园生活有疑问，来这里问一问</p>
+        <p>YOUR CAMPUS COMPANION</p>
       </div>
     </div>
-    <div class="top-actions">
-      <span class="ai-badge" id="aiBadge"><span class="badge-dot"></span><span id="aiBadgeText">检查中</span></span>
-      <button class="ghost-btn user-btn" id="identityBtn" type="button" title="修改昵称">
+    <nav id="featureLinks" class="top-nav feature-links" aria-label="全部功能快捷入口"></nav><div class="top-actions">
+      <button class="ghost-btn user-btn" id="openSocialHeader" type="button">同学私聊</button><button class="ghost-btn user-btn" onclick="logoutStudent()" type="button">退出登录</button><span class="ai-badge" id="aiBadge"><span class="badge-dot"></span><span id="aiBadgeText">检查中</span></span>
+      <button class="ghost-btn user-btn" id="identityBtn" type="button" title="打开我的">
         <span class="user-dot">我</span>
         <span id="userName">同学</span>
       </button>
@@ -29,12 +29,55 @@
     </div>
   </header>
 
-  <main class="layout">
+<section id="portal" aria-label="功能首页"><div class="hero-intro"><div class="hero-kicker"><span></span> 在西邮，遇见生活的更多可能</div><div id="heroTitle"><h2>校园里的每一问，<br>都有一个<span>好去处</span><i>。</i></h2></div><p>从一个问题，到一次连接。选一张卡片，开启你的校园日常。</p></div><div class="ring-heading"><span><b>探索你的校园工具箱</b> / EXPLORE</span><span>拖动探索 <span aria-hidden="true">↔</span> 点击卡片进入</span></div><div id="carouselRoot"></div><div class="carousel-controls"><button id="prevCard" aria-label="上一个功能">←</button><div><b id="activeFeatureName">校园问答</b><span id="featureCounter">01 / 06</span></div><button id="nextCard" aria-label="下一个功能">→</button></div><section class="bottom-note"><div><span class="note-symbol">✳</span><div><strong>有据可查，才放心回答。</strong><p>校园问答依据已有资料；不确定的事，我们会坦诚说明。</p></div></div><button onclick="enterFeature(0)">开始我的第一问 <span>↗</span></button></section></section>  <section id="myPage" class="my-page" hidden aria-label="我的">
+    <div class="my-cover">
+      <button class="my-back" id="myBack" type="button"><span aria-hidden="true">←</span> 返回首页</button>
+      <div class="my-cover-copy">
+        <p class="eyebrow">MY SPACE · 我的</p>
+        <h1>你的校园足迹</h1>
+        <p>浏览、收藏、发布和对话，都在这里。</p>
+      </div>
+      <div class="my-cover-mark" aria-hidden="true">邮</div>
+    </div>
+    <div class="my-profile-wrap">
+      <div class="my-profile-card">
+        <div class="my-avatar"><img src="/assets/xiyou-mascot-head.jpg" alt=""></div>
+        <div class="my-profile-copy">
+          <div class="my-name-line"><h2 id="myName">同学</h2><span class="my-anon-pill">匿名身份</span></div>
+          <p id="myIdentityLine">当前身份：同学</p>
+          <span class="my-subline">数据仅保存在当前浏览器；其他身份看不到你的私聊和草稿。</span>
+        </div>
+        <div class="my-head-actions">
+          <button class="ghost-btn" id="myEditName" type="button">修改昵称</button>
+          <button class="primary-btn" id="myPublishBtn" type="button">发布商品</button>
+        </div>
+      </div>
+
+      <div class="my-stats" aria-label="我的数据">
+        <button class="my-stat active" type="button" data-my-stat="history"><strong id="myCountHistory">0</strong><span>浏览历史</span></button>
+        <button class="my-stat" type="button" data-my-stat="products"><strong id="myCountProducts">0</strong><span>我的商品</span></button>
+        <button class="my-stat" type="button" data-my-stat="wanted"><strong id="myCountWanted">0</strong><span>想要的</span></button>
+        <button class="my-stat" type="button" data-my-stat="posts"><strong id="myCountPosts">0</strong><span>我的帖子</span></button>
+        <button class="my-stat" type="button" data-my-stat="chats"><strong id="myCountChats">0</strong><span>私聊</span></button>
+      </div>
+
+      <div class="tab-bar my-tabs" id="myTabs" role="tablist">
+        <button class="tab-btn active" type="button" data-my-tab="history" role="tab">浏览历史</button>
+        <button class="tab-btn" type="button" data-my-tab="products" role="tab">我的商品</button>
+        <button class="tab-btn" type="button" data-my-tab="wanted" role="tab">想要的</button>
+        <button class="tab-btn" type="button" data-my-tab="posts" role="tab">我的帖子</button>
+        <button class="tab-btn" type="button" data-my-tab="chats" role="tab">私聊</button>
+      </div>
+      <div class="my-content" id="myContent"></div>
+    </div>
+  </section>
+
+<div id="workspace" hidden><div class="workspace-nav"><button onclick="goHome()">← 返回功能首页</button><span id="workspaceLabel">校园问答</span><button id="newConversation">＋ 新对话</button></div><main class="layout">
     <section class="chat-shell" aria-label="西邮有问聊天">
       <div class="chat-head">
         <div>
-          <p class="eyebrow">一个聊天框 · 助手自动判断</p>
-          <h2>问校园、读课件、查消息、买卖闲置</h2>
+          <p class="eyebrow"><span id="workspaceEyebrow">CAMPUS Q&amp;A</span></p>
+          <h2 id="workspaceTitle">关于西邮，从这里问起</h2>
         </div>
         <span class="chat-head-tag">直接说需求</span>
       </div>
@@ -66,38 +109,23 @@
       </div>
     </section>
 
-    <aside class="side" aria-label="资料状态与能力说明">
-      <section class="card">
-        <p class="eyebrow">资料库</p>
-        <h2>回答从资料中来</h2>
-        <p>学校问题只根据你添加的资料回答。资料里没有的，我会直接说不知道。</p>
-        <div class="side-stats">
-          <div><b id="sideMatCount">0</b><span>份学校资料</span></div>
-          <div><b id="sideNoticeCount">0</b><span>条校园通知</span></div>
-        </div>
-        <p class="side-note">学校资料和校园通知由维护者在管理端统一维护。学生端只通过聊天使用，不需要填写密钥。</p>
-        <ul class="mat-preview" id="matPreview"></ul>
-      </section>
-
-      <section class="card rules-card">
-        <p class="eyebrow">现在能做什么</p>
-        <div class="rule"><b>01</b><span>依据资料回答校园问题，没有依据就说不知道。</span></div>
-        <div class="rule"><b>02</b><span>上传 PPTX，按页码梳理章节、解释难点、整理提纲。</span></div>
-        <div class="rule"><b>03</b><span>整理校园通知，区分发布时间、活动时间和报名截止。</span></div>
-        <div class="rule"><b>04</b><span>集市只做信息交流，不提供支付、订单、配送或交易担保。</span></div>
-      </section>
-
-      <section class="card privacy-card">
-        <p class="eyebrow">隐私提醒</p>
-        <p>帖子和商品不会自动写入手机号、学号、宿舍号。需要联系方式时默认写“有意者私聊”。私聊只有买卖双方能查看。</p>
+    <aside class="side conversation-side" aria-label="对话记录">
+      <section class="card conversation-card">
+        <p class="eyebrow">CONVERSATIONS</p>
+        <h2>对话记录</h2>
+        <button class="history-new" type="button" onclick="startNewConversation()">＋ 新建对话</button>
+        <p class="history-note">记录保存在当前浏览器，点击即可继续聊。</p>
+        <div id="conversationHistory" class="conversation-history" aria-label="历史对话列表"></div>
       </section>
     </aside>
-  </main>
+  </main></div>
 
   <footer class="site-footer">
-    <span>学生端 · 无需登录，不显示管理功能</span>
+    <span>西邮有问 © 2026 · 学生共创，非学校官方服务</span>
     <a href="/admin">维护入口</a>
   </footer>
+
+
 
   <dialog class="sheet wide market-sheet" id="marketDialog" aria-labelledby="marketTitle">
     <div class="sheet-inner">
@@ -239,6 +267,6 @@
   <input type="file" id="publishImageFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
   <div class="toast hidden" id="toast" role="status"></div>
 
-  <script src="/app.js"></script>
+<dialog id="socialDialog" class="sheet wide"><div class="sheet-inner"><header class="sheet-head"><div><p class="eyebrow">CAMPUS FRIENDS</p><h2>同学私聊</h2><p>关注同学，结交好友，随时聊聊校园生活。</p></div><button type="button" class="ghost-btn" onclick="document.getElementById('socialDialog').close()">关闭</button></header><form id="socialSearchForm" class="social-search"><input id="socialSearch" aria-label="搜索同学" placeholder="输入账号或昵称" maxlength="80"><button class="primary-btn" type="submit">搜索同学</button></form><nav class="social-tabs" aria-label="社交分类"><button type="button" data-social-mode="messages">消息</button><button type="button" data-social-mode="friends">好友</button><button type="button" data-social-mode="following">关注</button><button type="button" data-social-mode="followers">粉丝</button><button type="button" data-social-mode="requests">好友申请</button></nav><div id="socialList" aria-live="polite"></div></div></dialog><script src="/app.js"></script><script src="/vendor/react.min.js"></script><script src="/vendor/react-dom.min.js"></script><script src="/portal.js"></script><script src="/vendor/gsap.min.js"></script><script src="/hero-title.js"></script>
 </body>
 </html>

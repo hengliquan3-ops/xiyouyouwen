@@ -2443,3 +2443,575 @@ textarea:focus {
   margin-top: 12px;
   text-align: center;
 }
+.my-head {
+  align-items: flex-start;
+}
+
+.my-identity-line {
+  margin: 6px 0 0;
+  color: #81878c;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.my-head-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.my-tabs {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.my-tabs .tab-btn {
+  flex: 0 0 auto;
+  min-width: 82px;
+  white-space: nowrap;
+}
+
+.my-content {
+  min-height: 260px;
+  padding-top: 2px;
+}
+
+.my-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.my-empty {
+  margin: 8px 0;
+  padding: 34px 20px;
+  border: 1px dashed #ddd5c5;
+  border-radius: 14px;
+  background: #fbf8ef;
+  text-align: center;
+}
+
+.my-empty h3 {
+  margin: 0 0 7px;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.my-empty p {
+  max-width: 430px;
+  margin: 0 auto;
+  color: #7e868d;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.my-empty .primary-btn {
+  margin-top: 13px;
+}
+
+.my-post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.my-post-card {
+  padding: 14px 15px;
+  border: 1px solid #e5dcc9;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.my-post-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.my-post-head h3 {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.my-post-body {
+  max-height: 220px;
+  margin: 9px 0 0;
+  overflow: auto;
+  color: #515d66;
+  font-size: 12.5px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+}
+
+.my-post-missing {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid #eeddb6;
+  border-radius: 8px;
+  background: #fdf6e3;
+  color: #82652b;
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+
+.my-post-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 11px;
+  padding-top: 9px;
+  border-top: 1px dashed #e7dece;
+  color: #92948f;
+  font-size: 9.5px;
+}
+
+.my-post-foot .copy-btn {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 680px) {
+  .my-head-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .my-tabs .tab-btn {
+    min-width: 72px;
+    padding: 8px 8px;
+    font-size: 11px;
+  }
+
+  .my-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .my-post-foot {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .my-post-foot .copy-btn {
+    align-self: flex-end;
+  }
+}
+
+.my-tabs .tab-btn.active {
+  background: #eaf3f9;
+  border-color: #b8cfdf;
+  color: #245b87;
+}
+
+.my-page {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  padding: 22px clamp(14px, 5vw, 64px) 70px;
+}
+
+.my-cover {
+  position: relative;
+  min-height: 214px;
+  overflow: hidden;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 78% 16%, rgba(244, 223, 160, 0.2), transparent 34%),
+    linear-gradient(135deg, #173d59, #214e70 55%, #2a6786);
+  color: #fff8ea;
+  box-shadow: 0 24px 60px -46px rgba(21, 55, 80, 0.55);
+}
+
+.my-cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 248, 234, 0.17) 1px, transparent 1px);
+  background-size: 19px 19px;
+  opacity: 0.45;
+}
+
+.my-cover-copy {
+  position: absolute;
+  left: clamp(22px, 4vw, 48px);
+  bottom: 28px;
+  z-index: 2;
+}
+
+.my-cover .eyebrow {
+  color: #f4dfa0;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+}
+
+.my-cover h1 {
+  margin: 5px 0 6px;
+  color: #fff8ea;
+  font-size: clamp(29px, 3.2vw, 40px);
+  font-weight: 580;
+  letter-spacing: 0.04em;
+}
+
+.my-cover-copy > p:last-child {
+  margin: 0;
+  color: #cbdde7;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+}
+
+.my-cover-mark {
+  position: absolute;
+  right: 5%;
+  bottom: -54px;
+  z-index: 1;
+  color: rgba(244, 223, 160, 0.1);
+  font-family: "Songti SC", "Noto Serif CJK SC", serif;
+  font-size: 245px;
+  line-height: 1;
+  user-select: none;
+}
+
+.my-back {
+  position: absolute;
+  top: 17px;
+  left: 18px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 248, 234, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 248, 234, 0.08);
+  color: #fff8ea;
+  font-size: 10.5px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.my-back:hover {
+  background: rgba(255, 248, 234, 0.16);
+}
+
+.my-profile-wrap {
+  padding: 0 18px;
+}
+
+.my-profile-card {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: -42px;
+  padding: 15px 20px 15px 16px;
+  border: 1px solid #e4e0d5;
+  border-radius: 22px;
+  background: #fffdf8;
+  box-shadow: 0 20px 40px -34px rgba(21, 55, 80, 0.42);
+}
+
+.my-avatar {
+  width: 92px;
+  height: 92px;
+  flex: 0 0 92px;
+  overflow: hidden;
+  border: 4px solid #fffdf8;
+  border-radius: 24px;
+  background: #f7f1e3;
+  box-shadow: 0 8px 20px -16px rgba(21, 55, 80, 0.45);
+}
+
+.my-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  mix-blend-mode: multiply;
+}
+
+.my-profile-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.my-name-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.my-name-line h2 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 660;
+  letter-spacing: 0.01em;
+}
+
+.my-anon-pill {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #edf3f7;
+  color: #58798f;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.my-profile-copy p {
+  margin: 6px 0 3px;
+  color: #69777f;
+  font-size: 11px;
+}
+
+.my-subline {
+  color: #95968f;
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+.my-profile-card .my-head-actions {
+  margin-left: auto;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.my-profile-card .my-head-actions .ghost-btn,
+.my-profile-card .my-head-actions .primary-btn {
+  padding: 8px 12px;
+  font-size: 11px;
+}
+
+.my-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 13px 0 12px;
+}
+
+.my-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 11px 13px;
+  border: 1px solid #e4dfd3;
+  border-radius: 13px;
+  background: rgba(255, 253, 248, 0.82);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.my-stat:hover,
+.my-stat.active {
+  background: #eaf3f9;
+  border-color: #b8cfdf;
+  transform: translateY(-1px);
+}
+
+.my-stat strong {
+  color: #214e70;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.my-stat span {
+  color: #8b918f;
+  font-size: 9.5px;
+}
+
+.my-stat.active span {
+  color: #4f748b;
+}
+
+.my-page .my-tabs {
+  margin: 0 0 11px;
+  border: 1px solid #e3dfd5;
+  background: #f1eee7;
+}
+
+.my-page .my-content {
+  min-height: 300px;
+}
+
+.my-page .my-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.my-page .product-card {
+  background: #fffdf8;
+}
+
+.my-page .my-empty {
+  background: rgba(255, 253, 248, 0.7);
+  border-color: #ded7c9;
+}
+
+@media (max-width: 900px) {
+  .my-page {
+    padding: 14px 4% 52px;
+  }
+
+  .my-cover {
+    min-height: 185px;
+    border-radius: 21px;
+  }
+
+  .my-cover-mark {
+    font-size: 190px;
+    bottom: -42px;
+  }
+
+  .my-profile-wrap {
+    padding: 0 8px;
+  }
+
+  .my-profile-card {
+    margin-top: -29px;
+    padding: 13px;
+    flex-wrap: wrap;
+    gap: 11px;
+  }
+
+  .my-avatar {
+    width: 76px;
+    height: 76px;
+    flex-basis: 76px;
+    border-radius: 19px;
+  }
+
+  .my-name-line h2 {
+    font-size: 20px;
+  }
+
+  .my-profile-card .my-head-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+
+  .my-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .my-stat strong {
+    font-size: 21px;
+  }
+
+  .my-page .my-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .my-page {
+    padding: 10px 10px 42px;
+  }
+
+  .my-cover {
+    min-height: 166px;
+    border-radius: 18px;
+  }
+
+  .my-back {
+    top: 12px;
+    left: 12px;
+    padding: 6px 9px;
+    font-size: 9.5px;
+  }
+
+  .my-cover-copy {
+    left: 17px;
+    bottom: 36px;
+  }
+
+  .my-cover h1 {
+    font-size: 27px;
+  }
+
+  .my-cover-copy > p:last-child {
+    font-size: 10px;
+  }
+
+  .my-cover-mark {
+    right: 1%;
+    bottom: -34px;
+    font-size: 150px;
+  }
+
+  .my-profile-wrap {
+    padding: 0 3px;
+  }
+
+  .my-profile-card {
+    margin-top: -24px;
+    padding: 11px 12px;
+    border-radius: 17px;
+  }
+
+  .my-avatar {
+    width: 66px;
+    height: 66px;
+    flex-basis: 66px;
+    border-radius: 16px;
+    border-width: 3px;
+  }
+
+  .my-profile-copy {
+    min-width: calc(100% - 86px);
+  }
+
+  .my-name-line h2 {
+    font-size: 18px;
+  }
+
+  .my-profile-copy p {
+    font-size: 10px;
+  }
+
+  .my-subline {
+    font-size: 9px;
+  }
+
+  .my-profile-card .my-head-actions .ghost-btn,
+  .my-profile-card .my-head-actions .primary-btn {
+    padding: 7px 9px;
+    font-size: 10.5px;
+  }
+
+  .my-stats {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    margin: 9px 0;
+  }
+
+  .my-stat {
+    padding: 7px 6px;
+    border-radius: 10px;
+  }
+
+  .my-stat strong {
+    font-size: 18px;
+  }
+
+  .my-stat span {
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+  .my-page .my-tabs {
+    margin-bottom: 8px;
+  }
+
+  .my-page .my-tabs .tab-btn {
+    min-width: 68px;
+    padding: 8px 7px;
+    font-size: 10.5px;
+  }
+
+  .my-page .my-content {
+    min-height: 220px;
+  }
+}

@@ -1,0 +1,1 @@
+Built-in imagegen / background-extraction: Extract six sticker accessories from reference into a transparent 3-column 2-row sprite sheet: stamp, book, envelope, bag, WiFi, university. Retain irregular white sticker rims; remove cyan background and all UI. Animated with CSS, 60 seconds per orbit, counter-rotation keeps icons upright.

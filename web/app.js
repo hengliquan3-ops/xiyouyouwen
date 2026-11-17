@@ -9,6 +9,9 @@ const state = {
   materials: [],
   notices: [],
   ppt: null,
+  chatSessions: [],
+  chatSessionId: null,
+  chatFeature: 0,
   messages: [],
   history: [],
   currentPost: null,
@@ -24,6 +27,10 @@ const state = {
   imageContext: null,
   publish: { mode: "create", id: null, images: [], preview: null },
   adminTab: "materials",
+  myTab: "history",
+  myDashboard: null,
+  myLoading: false,
+  myError: "",
 };
 
 const els = {};
@@ -78,6 +85,8 @@ function cacheElements() {
     "chatDialog", "chatTitle", "chatThread", "chatForm", "chatInput", "chatSendBtn",
     "reportDialog", "reportTarget", "reportReason", "reportMsg", "reportSubmit",
     "identityDialog", "identityName", "identityMsg", "identitySave",
+    "myPage", "myTabs", "myContent", "myName", "myIdentityLine", "myEditName", "myPublishBtn", "myBack",
+    "myCountHistory", "myCountProducts", "myCountWanted", "myCountPosts", "myCountChats",
     "settingsDialog", "settingsForm", "settingKey", "settingBase", "settingModel", "settingsMsg",
     "settingsStatus", "settingsDot", "settingsSave", "clearKeyBtn",
   ];
@@ -87,6 +96,7 @@ function cacheElements() {
 }
 
 async function api(path, options = {}) {
+  if(window.DESIGN_PREVIEW) throw new Error("在线版为页面设计预览。请启动本地完整版以使用 AI、集市数据和私聊。");
   const init = { ...options };
   init.headers = {
     "Content-Type": "application/json",
@@ -107,6 +117,7 @@ async function api(path, options = {}) {
   } catch (error) {
     data = {};
   }
+  if (response.status === 401) { location.replace("/login"); }
   if (!response.ok) {
     const failure = new Error(data.message || `请求失败（HTTP ${response.status}）`);
     failure.code = data.error || "http_error";
@@ -116,7 +127,7 @@ async function api(path, options = {}) {
 }
 
 function bindEvents() {
-  els.identityBtn.addEventListener("click", openIdentity);
+  els.identityBtn.addEventListener("click", openMyPage);
   els.openMarket.addEventListener("click", openMarket);
 
   els.pptUploadBtn.addEventListener("click", () => els.pptFile.click());
@@ -136,6 +147,17 @@ function bindEvents() {
 
   document.querySelectorAll("[data-market-tab]").forEach((button) => {
     button.addEventListener("click", () => switchMarketTab(button.dataset.marketTab));
+  });
+  document.querySelectorAll("[data-my-tab]").forEach((button) => {
+    button.addEventListener("click", () => switchMyTab(button.dataset.myTab));
+  });
+  if (els.myEditName) els.myEditName.addEventListener("click", openIdentity);
+  if (els.myPublishBtn) els.myPublishBtn.addEventListener("click", () => openPublishDialog("create", null));
+  if (els.myBack) els.myBack.addEventListener("click", () => {
+    if (typeof goHome === "function") goHome();
+  });
+  document.querySelectorAll("[data-my-stat]").forEach((button) => {
+    button.addEventListener("click", () => switchMyTab(button.dataset.myStat));
   });
 
   if (els.materialForm) els.materialForm.addEventListener("submit", addMaterial);
@@ -170,9 +192,15 @@ function bindEvents() {
       if (event.target === dialog) dialog.close();
     });
   });
-  els.chatDialog.addEventListener("close", stopChatPolling);
+  els.chatDialog.addEventListener("close", () => {
+    stopChatPolling();
+    if (els.myPage && !els.myPage.hidden) loadMyDashboard();
+  });
   els.chatDialog.addEventListener("click", (event) => {
     if (event.target === els.chatDialog) els.chatDialog.close();
+  });
+  [els.marketDialog, els.productDialog, els.publishDialog].filter(Boolean).forEach((dialog) => {
+    dialog.addEventListener("close", () => refreshMyIfOpen());
   });
 
   document.addEventListener("click", handleGlobalClick);
@@ -241,8 +269,12 @@ function toast(text) {
 }
 
 async function init() {
+  const loginResponse = await fetch("/api/me");
+  if (!loginResponse.ok) { location.replace("/login"); return; }
+  const loginData = await loginResponse.json();
   cacheElements();
-  state.token = getToken();
+  state.token = loginData.user.id;
+  state.user = loginData.user;
   bindEvents();
   restoreChat();
   renderAll();
@@ -255,39 +287,76 @@ async function init() {
   await refreshStatus();
   state.materials = [];
   renderAll();
+  const params = new URLSearchParams(window.location.search);
+  const myTab = params.get("tab");
+  if (["history", "products", "wanted", "posts", "chats"].includes(myTab)) {
+    state.myTab = myTab;
+  }
+  if (params.get("my") === "1") {
+    window.setTimeout(openMyPage, 300);
+  }
 }
 
+function conversationStorageKey() { return `xy_conversations_v1_${state.token}`; }
+function loadConversation(session, feature = 0) {
+  state.chatSessionId = session?.id || null;
+  state.chatFeature = session?.feature ?? feature;
+  state.messages = (session?.messages || []).filter(m => m && m.status !== "pending");
+  state.history = session?.history || [];
+  state.ppt = session?.ppt || null;
+  state.currentPost = session?.currentPost || null;
+  state.currentProduct = session?.currentProduct || null;
+  els.input.value = session?.draft || "";
+}
 function restoreChat() {
   try {
-    const saved = JSON.parse(localStorage.getItem(chatStorageKey()) || "null");
-    if (!saved || typeof saved !== "object") return;
-    state.messages = Array.isArray(saved.messages)
-      ? saved.messages.filter((message) => message && message.status !== "pending").slice(-60)
-      : [];
-    state.history = Array.isArray(saved.history) ? saved.history.slice(-16) : [];
-    state.ppt = saved.ppt || null;
-    state.currentPost = saved.currentPost || null;
-    state.currentProduct = saved.currentProduct || null;
-  } catch (error) {
-    state.messages = [];
-  }
+    const stored = JSON.parse(localStorage.getItem(conversationStorageKey()) || "null");
+    state.chatSessions = Array.isArray(stored) ? stored.filter(s => s && s.id && Array.isArray(s.messages) && Array.isArray(s.history) && Number.isInteger(s.feature) && s.feature >= 0 && s.feature < 4) : [];
+    if (stored === null) {
+      const legacy = JSON.parse(localStorage.getItem(chatStorageKey()) || "null");
+      if (legacy && Array.isArray(legacy.messages) && legacy.messages.length) {
+        state.chatSessions.push({...legacy, history: legacy.history || [], id: nextId(), feature: 0, updatedAt: Date.now()});
+      }
+    }
+    loadConversation(state.chatSessions.find(s => s.feature === 0));
+    saveChat();
+  } catch (error) { state.chatSessions = []; loadConversation(null); }
 }
-
 function saveChat() {
-  try {
-    localStorage.setItem(
-      chatStorageKey(),
-      JSON.stringify({
-        messages: state.messages.slice(-60),
-        history: state.history.slice(-16),
-        ppt: state.ppt,
-        currentPost: state.currentPost,
-        currentProduct: state.currentProduct,
-      }),
-    );
-  } catch (error) {
-    return;
+  if (state.messages.length || state.ppt || els.input.value.trim()) {
+    if (!state.chatSessionId) state.chatSessionId = nextId();
+    const session = JSON.parse(JSON.stringify({
+      id: state.chatSessionId, feature: state.chatFeature, updatedAt: Date.now(),
+      messages: state.messages.slice(-60), history: state.history.slice(-16),
+      ppt: state.ppt, currentPost: state.currentPost, currentProduct: state.currentProduct,
+      draft: els.input.value,
+    }));
+    state.chatSessions = [session, ...state.chatSessions.filter(s => s.id !== session.id)];
   }
+  try { localStorage.setItem(conversationStorageKey(), JSON.stringify(state.chatSessions)); }
+  catch (error) { toast("浏览器存储空间不足，本次对话暂未保存，请勿关闭页面。"); }
+  renderSide();
+}
+function switchConversationFeature(feature) {
+  if (state.chatFeature === feature) return;
+  saveChat();
+  loadConversation(state.chatSessions.find(s => s.feature === feature), feature);
+  renderSide();
+}
+function startNewConversation() {
+  if (state.sending) { toast("请等待当前回答完成后再新建对话"); return; }
+  saveChat();
+  loadConversation(null, state.chatFeature);
+  renderMessages(); renderPptBar(); renderSide(); autoResize(); els.input.focus();
+}
+function openSavedConversation(id) {
+  if (state.sending) { toast("请等待当前回答完成后再切换对话"); return; }
+  const session = state.chatSessions.find(s => s.id === id);
+  if (!session) return;
+  saveChat();
+  window.enterFeature(session.feature);
+  loadConversation(session);
+  renderMessages(); renderPptBar(); renderSide(); autoResize();
 }
 
 async function refreshStatus() {
@@ -341,10 +410,9 @@ function renderAll() {
 }
 
 function renderStatus() {
+  if(window.DESIGN_PREVIEW){els.aiBadgeText.textContent="设计预览";els.userName.textContent="同学";return;}
   els.userName.textContent = state.user?.name || "同学";
   els.marketCount.textContent = String(state.counts.product_on_sale || 0);
-  els.sideMatCount.textContent = String(state.counts.material_count || 0);
-  els.sideNoticeCount.textContent = String(state.counts.notice_count || 0);
   if (state.statusError) {
     els.aiBadge.className = "ai-badge off";
     els.aiBadgeText.textContent = "连接失败";
@@ -361,6 +429,7 @@ function renderStatus() {
 
 function renderNotices() {
   els.notices.innerHTML = "";
+  if(window.DESIGN_PREVIEW){const n=el("div","notice");n.appendChild(el("p",null,"当前为界面设计预览。AI 回答、课件解析、集市数据和私聊请在本地完整版中使用。"));els.notices.appendChild(n);return;}
   if (state.statusError) {
     const notice = el("div", "notice");
     notice.appendChild(el("p", null, "连不上本地服务。请确认运行“西邮有问”的终端窗口还开着，然后刷新页面。"));
@@ -394,13 +463,22 @@ function renderNotices() {
 }
 
 function renderSide() {
-  els.sideMatCount.textContent = String(state.counts.material_count || 0);
-  els.sideNoticeCount.textContent = String(state.counts.notice_count || 0);
-  els.matPreview.innerHTML = "";
-  const count = state.counts.material_count || 0;
-  els.matPreview.appendChild(
-    el("li", "more", count > 0 ? `已收录 ${count} 份资料，由维护者统一管理` : "还没有资料，由维护者在管理端添加"),
-  );
+  const list = document.getElementById("conversationHistory");
+  if (!list) return;
+  list.replaceChildren();
+  if (!state.chatSessions.length) { list.appendChild(el("p", "history-empty", "还没有对话记录，开始你的第一问吧。")); return; }
+  const names = ["校园问答", "课件解读", "校园情报", "帖子创作"];
+  [...state.chatSessions].sort((a,b) => b.updatedAt - a.updatedAt).forEach(session => {
+    const button = el("button", "history-item" + (session.id === state.chatSessionId ? " active" : ""));
+    button.type = "button";
+    if (session.id === state.chatSessionId) button.setAttribute("aria-current", "true");
+    const title = session.messages.find(m => m.role === "user")?.text || session.ppt?.filename || session.draft || "新对话";
+    button.appendChild(el("strong", null, title.slice(0, 60)));
+    const date = new Date(session.updatedAt).toLocaleString("zh-CN", {month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"});
+    button.appendChild(el("small", null, `${names[session.feature]} · ${date}`));
+    button.onclick = () => openSavedConversation(session.id);
+    list.appendChild(button);
+  });
 }
 
 function renderPptBar() {
@@ -423,28 +501,9 @@ function dropPpt() {
 }
 
 function emptyState() {
-  const wrap = el("div", "empty");
-  wrap.appendChild(el("div", "empty-mark", "问"));
-  wrap.appendChild(el("h2", null, "直接说出你的需求"));
-  wrap.appendChild(
-    el("p", null, "我会自己判断是校园问答、PPTX 课件解读、校园情报、写帖子，还是找校园集市里的闲置。"),
-  );
-  const chips = el("div", "chips");
-  const items = [
-    { text: "最近有哪些校园消息？", fill: true },
-    { text: "帮我写一条找自习搭子的帖子。", fill: true },
-    { text: "有没有人在卖台灯？", fill: true },
-    { text: "这份 PPT 主要讲什么？", ppt: true },
-    { text: "新生报到需要准备什么？", fill: true },
-  ];
-  items.forEach((item) => {
-    const chip = el("button", "chip", item.text);
-    chip.type = "button";
-    if (item.ppt) chip.dataset.pickPpt = "1";
-    else chip.dataset.fill = item.text;
-    chips.appendChild(chip);
-  });
-  wrap.appendChild(chips);
+  if (window.featureEmptyState) return window.featureEmptyState();
+  const wrap = el('div','empty');
+  wrap.appendChild(el('h2',null,'欢迎来到西邮有问'));
   return wrap;
 }
 
@@ -892,7 +951,7 @@ async function sendMessage(text, options = {}) {
 
 function applyChatResult(data) {
   if (data.kind === "post" && data.title) {
-    state.currentPost = { title: data.title, body: data.body || "" };
+    state.currentPost = { id: data.post_id || null, title: data.title, body: data.body || "" };
   }
   if (data.kind === "product_preview" && data.draft) {
     state.currentProduct = data.draft;
@@ -1232,6 +1291,225 @@ async function updateReport(id, status, takeDown) {
   }
 }
 
+function updateMyIdentityLine() {
+  if (els.myName) els.myName.textContent = state.user?.name || "同学";
+  if (els.myIdentityLine) els.myIdentityLine.textContent = `当前身份：${state.user?.name || "同学"}`;
+}
+
+async function openMyPage() {
+  if (!els.myPage) return;
+  const portal = document.getElementById("portal");
+  const workspace = document.getElementById("workspace");
+  if (portal) portal.hidden = true;
+  if (workspace) workspace.hidden = true;
+  els.myPage.hidden = false;
+  updateMyIdentityLine();
+  switchMyTab(state.myTab, false);
+  await loadMyDashboard();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function switchMyTab(tab, load = true) {
+  if (tab === "chats" && load) { openSocial(); return; }
+  if (!["history", "products", "wanted", "posts", "chats"].includes(tab)) return;
+  state.myTab = tab;
+  document.querySelectorAll(".my-tabs [data-my-tab]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.myTab === tab);
+  });
+  document.querySelectorAll("[data-my-stat]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.myStat === tab);
+  });
+  renderMyTabs();
+  renderMyContent();
+  if (load) loadMyDashboard();
+}
+
+async function loadMyDashboard() {
+  state.myLoading = true;
+  state.myError = "";
+  renderMyContent();
+  try {
+    state.myDashboard = await api("/api/me/dashboard");
+  } catch (error) {
+    state.myDashboard = null;
+    state.myError = error.message;
+  } finally {
+    state.myLoading = false;
+    renderMyTabs();
+    renderMyContent();
+    updateMyIdentityLine();
+  }
+}
+
+function renderMyTabs() {
+  const labels = {
+    history: "浏览历史",
+    products: "我的商品",
+    wanted: "想要的",
+    posts: "我的帖子",
+    chats: "私聊",
+  };
+  const counts = state.myDashboard?.counts || null;
+  document.querySelectorAll(".my-tabs [data-my-tab]").forEach((button) => {
+    const key = button.dataset.myTab;
+    button.textContent = counts ? `${labels[key]} ${counts[key] || 0}` : labels[key];
+  });
+  renderMyStats();
+}
+
+function renderMyStats() {
+  const counts = state.myDashboard?.counts || {};
+  const map = {
+    myCountHistory: counts.history,
+    myCountProducts: counts.products,
+    myCountWanted: counts.wanted,
+    myCountPosts: counts.posts,
+    myCountChats: counts.chats,
+  };
+  Object.entries(map).forEach(([id, value]) => {
+    const node = els[id];
+    if (node) node.textContent = String(value || 0);
+  });
+}
+
+function myEmpty(title, text, actionLabel, action) {
+  const wrap = el("div", "my-empty");
+  wrap.appendChild(el("h3", null, title));
+  wrap.appendChild(el("p", null, text));
+  if (actionLabel && action) {
+    const button = el("button", "primary-btn", actionLabel);
+    button.type = "button";
+    button.addEventListener("click", action);
+    wrap.appendChild(button);
+  }
+  return wrap;
+}
+
+function openMarketFromMy() {
+  state.marketTab = "browse";
+  openMarket();
+}
+
+function renderMyContent() {
+  if (!els.myContent) return;
+  els.myContent.innerHTML = "";
+  if (state.myLoading) {
+    els.myContent.appendChild(el("div", "market-loading", "正在整理你的校园足迹…"));
+    return;
+  }
+  if (state.myError) {
+    els.myContent.appendChild(
+      myEmpty("没有加载成功", state.myError, "重试", () => loadMyDashboard()),
+    );
+    return;
+  }
+  const data = state.myDashboard;
+  if (!data) {
+    els.myContent.appendChild(el("div", "market-loading", "打开“我的”后加载数据"));
+    return;
+  }
+
+  if (["history", "products", "wanted"].includes(state.myTab)) {
+    const list = state.myTab === "history" ? data.history : state.myTab === "wanted" ? data.wanted : data.products;
+    if (!list || list.length === 0) {
+      if (state.myTab === "history") {
+        els.myContent.appendChild(
+          myEmpty("还没有浏览记录", "打开集市里的商品详情后，会记录在这里。", "去逛集市", openMarketFromMy),
+        );
+      } else if (state.myTab === "wanted") {
+        els.myContent.appendChild(
+          myEmpty("还没有想要的商品", "在商品详情里点“想要”，方便之后回来查看。", "去逛集市", openMarketFromMy),
+        );
+      } else {
+        els.myContent.appendChild(
+          myEmpty("还没有发布商品", "发布前会先预览，确认后才会公开。", "发布商品", () => {
+            openPublishDialog("create", null);
+          }),
+        );
+      }
+      return;
+    }
+    const grid = el("div", "product-grid my-grid");
+    list.forEach((product) => grid.appendChild(productCard(product, { chat: false })));
+    els.myContent.appendChild(grid);
+    return;
+  }
+
+  if (state.myTab === "posts") {
+    if (!data.posts || data.posts.length === 0) {
+      els.myContent.appendChild(
+        myEmpty(
+          "还没有帖子草稿",
+          "AI 接通后生成的帖子会保存在这里。帖子只作为草稿，不会自动公开。",
+          "去写帖子",
+          () => {
+            if (typeof enterFeature === "function") enterFeature(3);
+          },
+        ),
+      );
+      return;
+    }
+    const list = el("div", "my-post-list");
+    data.posts.forEach((post) => list.appendChild(myPostCard(post)));
+    els.myContent.appendChild(list);
+    return;
+  }
+
+  if (!data.conversations || data.conversations.length === 0) {
+    els.myContent.appendChild(
+      myEmpty("还没有私聊", "在商品详情点“联系卖家”，会话会出现在这里。", "去逛集市", openMarketFromMy),
+    );
+    return;
+  }
+  const list = el("div", "conversation-list");
+  data.conversations.forEach((conversation) => {
+    const item = el("button", "conversation-item");
+    item.type = "button";
+    const top = el("div", "conversation-top");
+    top.appendChild(el("strong", null, conversation.other_name));
+    top.appendChild(el("span", "conversation-role", conversation.kind === "direct" ? "同学私聊" : (conversation.role === "seller" ? "我是卖家" : "我是买家")));
+    item.appendChild(top);
+    item.appendChild(el("p", null, conversation.kind === "direct" ? "校园好友 · 直接交流" : `商品：${conversation.product_name}`));
+    item.appendChild(el("p", "conversation-last", conversation.last_message || "还没有消息"));
+    item.appendChild(el("span", "conversation-time", conversation.last_time || ""));
+    item.addEventListener("click", () => openChat(conversation));
+    list.appendChild(item);
+  });
+  els.myContent.appendChild(list);
+}
+
+function myPostCard(post) {
+  const card = el("article", "my-post-card");
+  const head = el("div", "my-post-head");
+  const title = el("div");
+  title.appendChild(el("span", "draft-kicker", post.post_type ? `帖子草稿 · ${post.post_type}` : "帖子草稿"));
+  title.appendChild(el("h3", null, post.title || "校园帖子草稿"));
+  head.appendChild(title);
+  head.appendChild(el("span", "draft-tag", "草稿"));
+  card.appendChild(head);
+  card.appendChild(el("p", "my-post-body", post.body || ""));
+  if (Array.isArray(post.missing) && post.missing.length) {
+    const missing = el("div", "my-post-missing");
+    missing.appendChild(el("strong", null, "待补充："));
+    missing.appendChild(el("span", null, post.missing.join("、")));
+    card.appendChild(missing);
+  }
+  const foot = el("div", "my-post-foot");
+  foot.appendChild(el("span", null, `更新：${post.updated_at || post.created_at || ""} · 仅自己可见，未公开发布`));
+  const copy = el("button", "copy-btn", "复制全文");
+  copy.type = "button";
+  copy.addEventListener("click", () => copyText(`${post.title || ""}
+
+${post.body || ""}`.trim(), copy));
+  foot.appendChild(copy);
+  card.appendChild(foot);
+  return card;
+}
+
+async function refreshMyIfOpen() {
+  if (els.myPage && !els.myPage.hidden) await loadMyDashboard();
+}
+
 function openMarket() {
   els.marketDialog.showModal();
   switchMarketTab(state.marketTab);
@@ -1242,6 +1520,7 @@ function switchMarketTab(tab) {
   state.marketTab = tab;
   document.querySelectorAll("[data-market-tab]").forEach((button) => {
     button.classList.toggle("active", button.dataset.marketTab === tab);
+    button.setAttribute("aria-selected",String(button.dataset.marketTab === tab));
   });
   els.marketPanelBrowse.classList.toggle("hidden", tab !== "browse");
   els.marketPanelMine.classList.toggle("hidden", tab !== "mine");
@@ -1309,9 +1588,9 @@ async function loadConversations() {
       item.type = "button";
       const top = el("div", "conversation-top");
       top.appendChild(el("strong", null, conversation.other_name));
-      top.appendChild(el("span", "conversation-role", conversation.role === "seller" ? "我是卖家" : "我是买家"));
+      top.appendChild(el("span", "conversation-role", conversation.kind === "direct" ? "同学私聊" : (conversation.role === "seller" ? "我是卖家" : "我是买家")));
       item.appendChild(top);
-      item.appendChild(el("p", null, `商品：${conversation.product_name}`));
+      item.appendChild(el("p", null, conversation.kind === "direct" ? "校园好友 · 直接交流" : `商品：${conversation.product_name}`));
       item.appendChild(el("p", "conversation-last", conversation.last_message || "还没有消息"));
       item.appendChild(el("span", "conversation-time", conversation.last_time || ""));
       item.addEventListener("click", () => openChat(conversation));
@@ -1328,6 +1607,7 @@ async function openProduct(productId) {
     const data = await api(`/api/market/products/${encodeURIComponent(productId)}`);
     renderProductDetail(data.product);
     els.productDialog.showModal();
+    api(`/api/market/products/${encodeURIComponent(productId)}/view`, { method: "POST" }).catch(() => {});
   } catch (error) {
     toast(error.message);
   }
@@ -1394,15 +1674,23 @@ function renderProductDetail(product) {
       relist.addEventListener("click", () => updateProductStatus(product.id, "on_sale"));
       actions.appendChild(relist);
     }
-  } else if (product.status === "on_sale") {
-    const contact = el("button", "primary-btn", "联系卖家");
-    contact.type = "button";
-    contact.addEventListener("click", () => contactSeller(product.id));
-    actions.appendChild(contact);
-    const report = el("button", "text-btn danger", "举报商品");
-    report.type = "button";
-    report.addEventListener("click", () => openReport("product", product.id, `举报商品「${product.name}」`));
-    actions.appendChild(report);
+  } else {
+    if (product.is_wanted || product.status === "on_sale") {
+      const want = el("button", product.is_wanted ? "soft-btn" : "ghost-btn", product.is_wanted ? "取消想要" : "想要");
+      want.type = "button";
+      want.addEventListener("click", () => toggleWanted(product.id, !product.is_wanted));
+      actions.appendChild(want);
+    }
+    if (product.status === "on_sale") {
+      const contact = el("button", "primary-btn", "联系卖家");
+      contact.type = "button";
+      contact.addEventListener("click", () => contactSeller(product.id));
+      actions.appendChild(contact);
+      const report = el("button", "text-btn danger", "举报商品");
+      report.type = "button";
+      report.addEventListener("click", () => openReport("product", product.id, `举报商品「${product.name}」`));
+      actions.appendChild(report);
+    }
   }
   els.productDetail.appendChild(actions);
   els.productDetail.appendChild(el("p", "product-policy", "集市不提供支付、订单、配送或交易担保。请自行核实物品和对方身份，不要提前转账。"));
@@ -1419,6 +1707,21 @@ async function updateProductStatus(productId, status) {
     await refreshStatus();
     await refreshMarket();
     searchMarket();
+    await refreshMyIfOpen();
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function toggleWanted(productId, wanted) {
+  try {
+    await api(`/api/market/products/${encodeURIComponent(productId)}/wanted`, {
+      method: wanted ? "POST" : "DELETE",
+    });
+    toast(wanted ? "已加入“想要的商品”" : "已取消想要");
+    const data = await api(`/api/market/products/${encodeURIComponent(productId)}`);
+    renderProductDetail(data.product);
+    await refreshMyIfOpen();
   } catch (error) {
     toast(error.message);
   }
@@ -1475,12 +1778,12 @@ async function loadThread(silent = false) {
 }
 
 function renderThread(conversation, messages) {
-  els.chatTitle.textContent = `${conversation.role === "seller" ? "买家" : "卖家"}：${conversation.other_name}`;
+  els.chatTitle.textContent = conversation.kind === "direct" ? conversation.other_name : `${conversation.role === "seller" ? "买家" : "卖家"}：${conversation.other_name}`;
   els.chatThread.innerHTML = "";
-  const productLine = el("p", "thread-product", `关于商品「${conversation.product_name}」`);
+  const productLine = el("p", "thread-product", conversation.kind === "direct" ? "同学私聊" : `关于商品「${conversation.product_name}」`);
   els.chatThread.appendChild(productLine);
   if (!messages.length) {
-    els.chatThread.appendChild(el("div", "thread-empty", "还没有消息。可以先打个招呼，但不要提前转账。"));
+    els.chatThread.appendChild(el("div", "thread-empty", conversation.kind === "direct" ? "还没有消息，和同学打个招呼吧。" : "还没有消息。可以先打个招呼，但不要提前转账。"));
   }
   messages.forEach((message) => {
     const row = el("div", `thread-msg ${message.mine ? "mine" : ""}`);
@@ -1727,6 +2030,7 @@ async function confirmPublish() {
     await refreshMarket();
     await searchMarket();
     renderMessages();
+    await refreshMyIfOpen();
   } catch (error) {
     els.publishMsg.className = "form-msg error";
     els.publishMsg.textContent = error.message;
@@ -1806,6 +2110,7 @@ async function saveIdentity() {
     els.identityMsg.className = "form-msg";
     els.identityMsg.textContent = "昵称已保存。";
     renderStatus();
+    updateMyIdentityLine();
     toast("昵称已更新");
     window.setTimeout(() => els.identityDialog.close(), 700);
   } catch (error) {
@@ -1893,4 +2198,54 @@ async function clearKey() {
   }
 }
 
+window.addEventListener("pagehide", () => { if (state.token && els.input) saveChat(); });
 document.addEventListener("DOMContentLoaded", init);
+async function logoutStudent() {
+  if (state.sending) { toast("请等待当前回答完成"); return; }
+  saveChat();
+  await fetch("/api/auth/logout", {method:"POST", headers:{"Content-Type":"application/json"}, body:"{}"});
+  location.replace("/login");
+}
+
+let socialMode = "friends";
+let socialLoadVersion = 0;
+function openSocial() {
+  const dialog = document.getElementById("socialDialog");
+  if (!dialog.open) dialog.showModal();
+  loadSocial();
+}
+async function loadSocial() {
+  const version = ++socialLoadVersion;
+  const list = document.getElementById("socialList");
+  list.textContent = "正在加载…";
+  document.querySelectorAll('[data-social-mode]').forEach(b => b.classList.toggle('active', b.dataset.socialMode === socialMode));
+  try {
+    if (socialMode === "messages") {
+      const data = await api('/api/market/conversations');
+      if (version !== socialLoadVersion) return;
+      list.replaceChildren();
+      data.conversations.forEach(c => { const b=el('button','history-item');b.type='button';b.appendChild(el('strong',null,c.other_name));b.appendChild(el('small',null,(c.kind==='direct'?'同学私聊':'集市咨询')+' · '+(c.last_message||'开始聊天')));b.onclick=()=>openChat(c);list.appendChild(b); });
+    } else {
+      const data = await api('/api/social?mode='+socialMode+'&q='+encodeURIComponent(document.getElementById('socialSearch').value));
+      if (version !== socialLoadVersion) return;
+      list.replaceChildren();
+      data.users.forEach(u=>{
+        const row=el('article','social-person');const info=el('div');info.appendChild(el('strong',null,u.name));info.appendChild(el('small',null,'账号：'+u.account));row.appendChild(info);
+        const actions=el('div','social-actions');
+        const button=(label,action)=>{const b=el('button','ghost-btn',label);b.type='button';b.onclick=async()=>{b.disabled=true;try{const result=await api('/api/social',{method:'POST',body:JSON.stringify({user_id:u.id,action})});if(action==='message')await openChat(result.conversation);else await loadSocial();}catch(e){toast(e.message);}finally{b.disabled=false;}};actions.appendChild(b);};
+        button(u.mutual?'已互关':u.following?'已关注':'关注',u.following?'unfollow':'follow');
+        if(u.friend_status==='incoming'){button('同意好友','accept');button('拒绝','decline');}
+        else if(u.friend_status==='outgoing')button('撤回申请','cancel');
+        else if(u.friend_status==='friends')button('解除好友','remove');
+        else button('加好友','request');
+        button('发消息','message');row.appendChild(actions);list.appendChild(row);
+      });
+    }
+    if(!list.children.length)list.appendChild(el('p','history-empty',socialMode==='search'?'输入账号或昵称查找同学。':'这里暂时没有记录，搜索同学开启交流吧。'));
+  } catch(e){if(version===socialLoadVersion)list.textContent=e.message;}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ document.getElementById('socialSearchForm').onsubmit=e=>{e.preventDefault();socialMode='search';loadSocial();};
+ document.querySelectorAll('[data-social-mode]').forEach(b=>b.onclick=()=>{socialMode=b.dataset.socialMode;loadSocial();});
+ document.getElementById('openSocialHeader').onclick=openSocial;
+});

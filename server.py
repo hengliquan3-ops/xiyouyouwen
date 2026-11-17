@@ -1,3 +1,4 @@
+from http.cookies import SimpleCookie
 import base64
 import binascii
 import hashlib
@@ -261,6 +262,30 @@ def load_reports():
 
 def write_reports(items):
     write_store("reports", "reports", items)
+
+
+def load_posts():
+    return [item for item in read_store("posts", "posts") if isinstance(item, dict) and item.get("id")]
+
+
+def write_posts(items):
+    write_store("posts", "posts", items)
+
+
+def load_views():
+    return [item for item in read_store("view_history", "views") if isinstance(item, dict) and item.get("user_id")]
+
+
+def write_views(items):
+    write_store("view_history", "views", items)
+
+
+def load_wanted():
+    return [item for item in read_store("wanted", "wanted") if isinstance(item, dict) and item.get("user_id")]
+
+
+def write_wanted(items):
+    write_store("wanted", "wanted", items)
 
 
 PHONE_RE = re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)")
@@ -923,6 +948,155 @@ def public_product(product, viewer=None, include_seller_id=False):
     return item
 
 
+def is_product_wanted(user_id, product_id):
+    return any(
+        item.get("user_id") == user_id and item.get("product_id") == product_id
+        for item in load_wanted()
+    )
+
+
+def save_post_for_user(user, current_post, result):
+    title = str(result.get("title", "")).strip()[:80] or "校园帖子草稿"
+    body = str(result.get("body", "")).strip()
+    missing = result.get("missing", [])
+    missing = [str(item).strip() for item in missing if str(item).strip()] if isinstance(missing, list) else []
+    now = time.strftime("%Y-%m-%d %H:%M")
+    with LOCK:
+        posts = load_posts()
+        current_id = str(current_post.get("id", "")) if isinstance(current_post, dict) else ""
+        existing = next(
+            (item for item in posts if item.get("id") == current_id and item.get("owner_id") == user["id"]),
+            None,
+        )
+        if existing:
+            existing.update(
+                {
+                    "title": title,
+                    "body": body,
+                    "missing": missing,
+                    "caution": str(result.get("caution", "")).strip(),
+                    "privacy_note": str(result.get("privacy_note", "")).strip(),
+                    "post_type": str(result.get("post_type", "")).strip(),
+                    "updated_at": now,
+                }
+            )
+            post = existing
+        else:
+            post = {
+                "id": uuid.uuid4().hex[:12],
+                "owner_id": user["id"],
+                "title": title,
+                "body": body,
+                "missing": missing,
+                "caution": str(result.get("caution", "")).strip(),
+                "privacy_note": str(result.get("privacy_note", "")).strip(),
+                "post_type": str(result.get("post_type", "")).strip(),
+                "status": "draft",
+                "created_at": now,
+                "updated_at": now,
+            }
+            posts.append(post)
+        owned = [item for item in posts if item.get("owner_id") == user["id"]]
+        if len(owned) > 100:
+            overflow = set(item["id"] for item in owned[:-100])
+            posts = [item for item in posts if item.get("id") not in overflow]
+        write_posts(posts)
+    return {
+        "id": post["id"],
+        "title": post["title"],
+        "body": post["body"],
+        "missing": post["missing"],
+        "caution": post["caution"],
+        "privacy_note": post["privacy_note"],
+        "post_type": post["post_type"],
+        "status": "draft",
+        "created_at": post["created_at"],
+        "updated_at": post["updated_at"],
+    }
+
+
+def my_dashboard_payload(user):
+    products = load_products()
+    by_id = {item["id"]: item for item in products}
+    my_products = [item for item in products if item.get("seller_id") == user["id"]]
+    my_products.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+
+    views = [item for item in load_views() if item.get("user_id") == user["id"]]
+    views.sort(key=lambda item: item.get("viewed_at", ""), reverse=True)
+    history = []
+    seen_history = set()
+    for view in views:
+        product = by_id.get(view.get("product_id"))
+        if not product or product["id"] in seen_history:
+            continue
+        item = public_product(product, user)
+        item["viewed_at"] = view.get("viewed_at", "")
+        history.append(item)
+        seen_history.add(product["id"])
+        if len(history) >= 30:
+            break
+
+    wanted_rows = [item for item in load_wanted() if item.get("user_id") == user["id"]]
+    wanted_rows.sort(key=lambda item: item.get("wanted_at", ""), reverse=True)
+    wanted = []
+    seen_wanted = set()
+    for row in wanted_rows:
+        product = by_id.get(row.get("product_id"))
+        if not product or product["id"] in seen_wanted:
+            continue
+        item = public_product(product, user)
+        item["wanted_at"] = row.get("wanted_at", "")
+        wanted.append(item)
+        seen_wanted.add(product["id"])
+        if len(wanted) >= 30:
+            break
+
+    posts = [item for item in load_posts() if item.get("owner_id") == user["id"]]
+    posts.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
+    posts = posts[:30]
+
+    conversations = [
+        item for item in load_conversations()
+        if user["id"] in (item.get("buyer_id"), item.get("seller_id"))
+    ]
+    conversation_views = [self_conversation_view(item, user) for item in conversations]
+    conversation_views.sort(key=lambda item: item.get("last_time", ""), reverse=True)
+
+    return {
+        "counts": {
+            "history": len(history),
+            "products": len(my_products),
+            "wanted": len(wanted),
+            "posts": len(posts),
+            "chats": len(conversation_views),
+        },
+        "history": history,
+        "products": [public_product(item, user) for item in my_products],
+        "wanted": wanted,
+        "posts": posts,
+        "conversations": conversation_views,
+    }
+
+
+def self_conversation_view(conversation, viewer):
+    other_id = conversation.get("seller_id") if viewer["id"] == conversation.get("buyer_id") else conversation.get("buyer_id")
+    product = next((item for item in load_products() if item["id"] == conversation.get("product_id")), None)
+    messages = [item for item in load_messages() if item.get("conversation_id") == conversation.get("id")]
+    last = messages[-1] if messages else None
+    return {
+        "id": conversation.get("id"),
+        "kind": conversation.get("kind", "market"),
+            "product_id": conversation.get("product_id"),
+        "product_name": product.get("name", "商品已删除") if product else "商品已删除",
+        "product_status": product.get("status", "off_shelf") if product else "off_shelf",
+        "other_name": user_name(other_id),
+        "role": "seller" if viewer["id"] == conversation.get("seller_id") else "buyer",
+        "last_message": str(last.get("body", ""))[:80] if last else "",
+        "last_time": last.get("created_at", "") if last else conversation.get("created_at", ""),
+        "updated_at": conversation.get("updated_at", ""),
+    }
+
+
 def search_products(query, limit=24):
     terms = [term for term in re.split(r"\s+", str(query or "").strip().lower()) if term]
     results = []
@@ -1280,6 +1454,21 @@ def admin_overview_payload():
     }
 
 
+STUDENT_SESSIONS = {}
+STUDENT_ATTEMPTS = {}
+
+def student_session(handler):
+    try:
+        cookies = SimpleCookie(handler.headers.get("Cookie", ""))
+        token = cookies.get("xy_session")
+        with LOCK:
+            session = STUDENT_SESSIONS.get(token.value if token else "")
+        if session and session[1] > time.time():
+            return find_user_by_id(session[0])
+    except Exception:
+        pass
+    return None
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "XiyouYouwen/3.0"
     protocol_version = "HTTP/1.1"
@@ -1339,16 +1528,66 @@ class Handler(BaseHTTPRequestHandler):
         return data
 
     def current_user(self, create=False):
-        token = self.headers.get("X-User-Token", "").strip()
-        if create:
-            return ensure_user(token)
-        return find_user_by_token(token)
+        return student_session(self)
 
     def require_user(self):
-        user = self.current_user(create=True)
+        user = self.current_user()
         if not user:
-            raise ValueError("请刷新页面后再试")
+            raise ValueError("请先登录")
         return user
+
+    def handle_student_auth(self, path):
+        data = self.read_json(max_bytes=8192)
+        if path == "/api/auth/logout":
+            cookies = SimpleCookie(self.headers.get("Cookie", ""))
+            token = cookies.get("xy_session")
+            with LOCK:
+                STUDENT_SESSIONS.pop(token.value if token else "", None)
+            self.send_json(200, {"ok": True}, cookie="xy_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0")
+            return
+        if path not in ("/api/auth/register", "/api/auth/login"):
+            self.send_error_json(404, "not_found", "接口不存在")
+            return
+        account = str(data.get("account", "")).strip()
+        password = str(data.get("password", ""))
+        ip = self.client_address[0]
+        with LOCK:
+            attempts = [t for t in STUDENT_ATTEMPTS.get(ip, []) if t > time.time()-600]
+            if len(attempts) >= 15:
+                self.send_error_json(429, "rate_limit", "尝试过于频繁，请十分钟后重试")
+                return
+            STUDENT_ATTEMPTS[ip] = attempts + [time.time()]
+            users = load_users()
+            if path.endswith("register"):
+                student_id = str(data.get("student_id", "")).strip()
+                real_name = str(data.get("real_name", "")).strip()
+                nickname = str(data.get("nickname", "")).strip()
+                if not re.fullmatch(r"[A-Za-z0-9_]{4,32}", account) or not 8 <= len(password) <= 128:
+                    raise ValueError("账号需为4至32位字母、数字或下划线；密码需为8至128位")
+                if not re.fullmatch(r"[0-9]{6,20}", student_id) or not 1 <= len(real_name) <= 40 or not 1 <= len(nickname) <= 24:
+                    raise ValueError("请填写有效学号（6至20位数字）、姓名和昵称")
+                if any(u.get("account") == account or u.get("student_id") == student_id for u in users):
+                    raise ValueError("账号或学号已注册，请直接登录")
+                salt = secrets.token_hex(16)
+                user = {"id": uuid.uuid4().hex[:12], "token": secrets.token_hex(32), "account": account,
+                        "student_id": student_id, "real_name": real_name, "name": nickname,
+                        "salt": salt, "password_hash": admin_hash_key(password, salt),
+                        "created_at": time.strftime("%Y-%m-%d %H:%M")}
+                users.append(user)
+                write_store("users", "users", users)
+            else:
+                user = next((u for u in users if u.get("account") == account), None)
+                digest = admin_hash_key(password[:129], user["salt"] if user else "00"*16)
+                if not user or not hmac.compare_digest(digest, user.get("password_hash", "")):
+                    self.send_error_json(401, "unauthorized", "账号或密码不正确")
+                    return
+            token = secrets.token_urlsafe(32)
+            now = time.time()
+            for old, value in list(STUDENT_SESSIONS.items()):
+                if value[1] <= now: STUDENT_SESSIONS.pop(old, None)
+            STUDENT_SESSIONS[token] = (user["id"], now + 86400)
+            STUDENT_ATTEMPTS.pop(ip, None)
+        self.send_json(200, {"user": public_user(user)}, cookie=f"xy_session={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400")
 
     def require_admin(self):
         if admin_local_only() and not is_loopback_request(self):
@@ -1382,6 +1621,12 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         try:
+            if path == "/login":
+                self.send_file("login.html", "text/html; charset=utf-8")
+                return
+            if path.startswith("/api/") and not getattr(self.server, "admin_mode", False) and not student_session(self):
+                self.send_error_json(401, "unauthorized", "请先登录")
+                return
             admin_server = bool(getattr(self.server, "admin_mode", False))
             public_port = getattr(self.server, "public_port", 8000)
             admin_port = getattr(self.server, "admin_port", 8001)
@@ -1417,6 +1662,9 @@ class Handler(BaseHTTPRequestHandler):
                         return
                     self.send_error_json(404, "not_found", "页面不存在")
                     return
+            if path == "/api/social":
+                self.handle_social_get(parsed.query)
+                return
             if path == "/api/status":
                 self.send_json(200, self.status_payload())
                 return
@@ -1439,6 +1687,9 @@ class Handler(BaseHTTPRequestHandler):
                     self.send_error_json(401, "unauthorized", "缺少有效的身份标识，请刷新页面。")
                     return
                 self.send_json(200, {"user": public_user(user)})
+                return
+            if path == "/api/me/dashboard":
+                self.handle_my_dashboard()
                 return
             if path == "/api/materials":
                 self.require_admin()
@@ -1499,6 +1750,10 @@ class Handler(BaseHTTPRequestHandler):
                 }.get(suffix, "application/octet-stream")
                 self.send_bytes(target.read_bytes(), content_type, "public, max-age=3600")
                 return
+            if path in ("/hero-title.js", "/TextType.css", "/vendor/gsap.min.js", "/portal.css", "/portal.js", "/CircularCarousel.css", "/vendor/react.min.js", "/vendor/react-dom.min.js") or re.fullmatch(r"/assets/feature-(qa|ppt|intel|post|market|chats)\.(svg|png)", path):
+                media = "image/png" if path.endswith(".png") else "image/svg+xml" if path.endswith(".svg") else ("text/css" if path.endswith(".css") else "application/javascript")
+                self.send_file(path.lstrip("/"), media + "; charset=utf-8")
+                return
             if path in ("/", "/index.html"):
                 self.send_file("index.html", "text/html; charset=utf-8")
                 return
@@ -1547,6 +1802,12 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlparse(self.path).path
         try:
+            if path.startswith("/api/auth/") and not getattr(self.server, "admin_mode", False):
+                self.handle_student_auth(path)
+                return
+            if path.startswith("/api/") and not getattr(self.server, "admin_mode", False) and not student_session(self):
+                self.send_error_json(401, "unauthorized", "请先登录")
+                return
             admin_server = bool(getattr(self.server, "admin_mode", False))
             if admin_server:
                 if not is_admin_post_path(path):
@@ -1556,6 +1817,9 @@ class Handler(BaseHTTPRequestHandler):
                 if is_admin_post_path(path):
                     self.send_error_json(404, "not_found", "接口不存在")
                     return
+            if path == "/api/social":
+                self.handle_social_action()
+                return
             if path == "/api/admin/setup":
                 self.handle_admin_setup()
                 return
@@ -1595,6 +1859,14 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/market/products":
                 self.handle_create_product()
                 return
+            match = re.match(r"^/api/market/products/([A-Za-z0-9]+)/view$", path)
+            if match:
+                self.handle_record_product_view(match.group(1))
+                return
+            match = re.match(r"^/api/market/products/([A-Za-z0-9]+)/wanted$", path)
+            if match:
+                self.handle_add_wanted(match.group(1))
+                return
             if path == "/api/market/conversations":
                 self.handle_create_conversation()
                 return
@@ -1620,6 +1892,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_PATCH(self):
         path = urlparse(self.path).path
         try:
+            if path.startswith("/api/") and not getattr(self.server, "admin_mode", False) and not student_session(self):
+                self.send_error_json(401, "unauthorized", "请先登录")
+                return
             admin_server = bool(getattr(self.server, "admin_mode", False))
             if admin_server and not path.startswith("/api/reports/"):
                 self.send_error_json(404, "not_found", "管理端仅提供管理功能")
@@ -1649,7 +1924,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         path = urlparse(self.path).path
         try:
-            if not bool(getattr(self.server, "admin_mode", False)):
+            if path.startswith("/api/") and not getattr(self.server, "admin_mode", False) and not student_session(self):
+                self.send_error_json(401, "unauthorized", "请先登录")
+                return
+            admin_server = bool(getattr(self.server, "admin_mode", False))
+            if not admin_server:
+                match = re.match(r"^/api/market/products/([A-Za-z0-9]+)/wanted$", path)
+                if match:
+                    self.handle_remove_wanted(match.group(1))
+                    return
                 self.send_error_json(404, "not_found", "接口不存在")
                 return
             match = re.match(r"^/api/materials/([A-Za-z0-9]+)$", path)
@@ -2169,6 +2452,11 @@ class Handler(BaseHTTPRequestHandler):
         raw = call_ai(POST_SYSTEM_PROMPT, user_content, 0.6, 1600)
         result = normalize_post_result(parse_json_object(raw), raw, current_post)
         result["kind"] = "post" if result.get("type") == "draft" else "post_clarify"
+        if result.get("type") == "draft":
+            user = self.current_user(create=False)
+            if user:
+                saved = save_post_for_user(user, current_post, result)
+                result["post_id"] = saved["id"]
         self.send_json(200, result)
 
     def handle_market_search_chat(self, query):
@@ -2215,10 +2503,85 @@ class Handler(BaseHTTPRequestHandler):
         if not product:
             self.send_error_json(404, "not_found", "商品不存在")
             return
-        if product.get("status") != "on_sale" and not (viewer and viewer["id"] == product.get("seller_id")):
+        if (
+            product.get("status") != "on_sale"
+            and not (viewer and viewer["id"] == product.get("seller_id"))
+            and not (viewer and is_product_wanted(viewer["id"], product_id))
+        ):
             self.send_error_json(404, "not_found", "商品已下架或不存在")
             return
-        self.send_json(200, {"product": public_product(product, viewer)})
+        item = public_product(product, viewer)
+        if viewer:
+            item["is_wanted"] = is_product_wanted(viewer["id"], product_id)
+        self.send_json(200, {"product": item})
+
+    def handle_my_dashboard(self):
+        user = self.require_user()
+        self.send_json(200, my_dashboard_payload(user))
+
+    def handle_record_product_view(self, product_id):
+        user = self.require_user()
+        product = next((item for item in load_products() if item["id"] == product_id), None)
+        if not product:
+            self.send_error_json(404, "not_found", "商品不存在")
+            return
+        if product.get("status") != "on_sale" and product.get("seller_id") != user["id"]:
+            self.send_error_json(404, "not_found", "商品已下架或不存在")
+            return
+        if product.get("seller_id") == user["id"]:
+            self.send_json(200, {"ok": True, "recorded": False})
+            return
+        viewed_at = time.strftime("%Y-%m-%d %H:%M:%S")
+        with LOCK:
+            views = [
+                item for item in load_views()
+                if not (item.get("user_id") == user["id"] and item.get("product_id") == product_id)
+            ]
+            views.append({"user_id": user["id"], "product_id": product_id, "viewed_at": viewed_at})
+            own_views = [item for item in views if item.get("user_id") == user["id"]]
+            if len(own_views) > 60:
+                overflow = set(tuple((item.get("product_id"), item.get("viewed_at"))) for item in own_views[:-60])
+                views = [
+                    item for item in views
+                    if not (item.get("user_id") == user["id"] and tuple((item.get("product_id"), item.get("viewed_at"))) in overflow)
+                ]
+            write_views(views)
+        self.send_json(200, {"ok": True, "recorded": True, "viewed_at": viewed_at})
+
+    def handle_add_wanted(self, product_id):
+        user = self.require_user()
+        product = next((item for item in load_products() if item["id"] == product_id), None)
+        if not product:
+            self.send_error_json(404, "not_found", "商品不存在")
+            return
+        if product.get("seller_id") == user["id"]:
+            raise ValueError("不能收藏自己发布的商品")
+        if product.get("status") != "on_sale":
+            raise ValueError("这件商品已经下架或已出，暂时不能收藏")
+        with LOCK:
+            wanted = load_wanted()
+            if not any(item.get("user_id") == user["id"] and item.get("product_id") == product_id for item in wanted):
+                wanted.append(
+                    {
+                        "user_id": user["id"],
+                        "product_id": product_id,
+                        "wanted_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                )
+                write_wanted(wanted)
+        self.send_json(200, {"ok": True, "wanted": True})
+
+    def handle_remove_wanted(self, product_id):
+        user = self.require_user()
+        with LOCK:
+            wanted = load_wanted()
+            remaining = [
+                item for item in wanted
+                if not (item.get("user_id") == user["id"] and item.get("product_id") == product_id)
+            ]
+            if len(remaining) != len(wanted):
+                write_wanted(remaining)
+        self.send_json(200, {"ok": True, "wanted": False})
 
     def handle_my_products(self):
         user = self.require_user()
@@ -2300,6 +2663,76 @@ class Handler(BaseHTTPRequestHandler):
             write_products(products)
         self.send_json(200, {"product": public_product(product, user)})
 
+    def handle_social_get(self, query):
+        me = self.require_user()["id"]
+        params = parse_qs(query)
+        q = params.get("q", [""])[0].strip().casefold()[:80]
+        mode = params.get("mode", ["friends"])[0]
+        with LOCK:
+            follows = read_store("social_follows", "items")
+            friends = read_store("social_friends", "items")
+            users = load_users()
+        views = []
+        for u in users:
+            uid = u["id"]
+            if uid == me or not u.get("account"): continue
+            following = {"from": me, "to": uid} in follows
+            follower = {"from": uid, "to": me} in follows
+            relation = next((x for x in friends if {x["from"], x["to"]} == {me, uid}), None)
+            status = "none" if not relation else ("friends" if relation["status"] == "accepted" else ("incoming" if relation["to"] == me else "outgoing"))
+            if mode == "search" and (not q or q not in (u.get("account", "") + " " + u.get("name", "")).casefold()): continue
+            if mode == "friends" and status != "friends": continue
+            if mode == "following" and not following: continue
+            if mode == "followers" and not follower: continue
+            if mode == "requests" and status not in ("incoming", "outgoing"): continue
+            views.append({"id":uid,"name":u.get("name", "同学"),"account":u["account"],"following":following,"mutual":following and follower,"friend_status":status})
+        self.send_json(200, {"users": views[:100]})
+
+    def handle_social_action(self):
+        user = self.require_user()
+        me = user["id"]
+        data = self.read_json()
+        target = str(data.get("user_id", ""))
+        other = find_user_by_id(target)
+        if not other or not other.get("account") or target == me:
+            raise ValueError("请选择其他已注册同学")
+        action = data.get("action")
+        with LOCK:
+            if action in ("follow", "unfollow"):
+                items = read_store("social_follows", "items")
+                edge = {"from":me,"to":target}
+                items = [x for x in items if x != edge]
+                if action == "follow": items.append(edge)
+                write_store("social_follows", "items", items)
+            elif action in ("request", "accept", "decline", "cancel", "remove"):
+                items = read_store("social_friends", "items")
+                edge = next((x for x in items if {x["from"], x["to"]} == {me,target}), None)
+                if action == "request":
+                    if not edge: items.append({"from":me,"to":target,"status":"pending"})
+                elif action in ("accept", "decline"):
+                    if not edge or edge["to"] != me or edge["status"] != "pending": raise ValueError("好友申请已失效")
+                    if action == "accept": edge["status"] = "accepted"
+                    else: items.remove(edge)
+                elif action == "cancel":
+                    if not edge or edge["from"] != me or edge["status"] != "pending": raise ValueError("无法撤回此申请")
+                    items.remove(edge)
+                elif action == "remove":
+                    if not edge or edge["status"] != "accepted": raise ValueError("尚未成为好友")
+                    items.remove(edge)
+                write_store("social_friends", "items", items)
+            elif action == "message":
+                items = load_conversations()
+                conversation = next((x for x in items if x.get("kind") == "direct" and {x["buyer_id"],x["seller_id"]} == {me,target}), None)
+                if not conversation:
+                    now = time.strftime("%Y-%m-%d %H:%M:%S")
+                    conversation = {"id":uuid.uuid4().hex[:12],"kind":"direct","product_id":"","buyer_id":me,"seller_id":target,"created_at":now,"updated_at":now}
+                    items.append(conversation)
+                    write_conversations(items)
+            else:
+                raise ValueError("操作不支持")
+        if action == "message": self.send_json(200, {"conversation":self.conversation_view(conversation,user)})
+        else: self.send_json(200, {"ok":True})
+
     def handle_create_conversation(self):
         user = self.require_user()
         data = self.read_json()
@@ -2348,6 +2781,7 @@ class Handler(BaseHTTPRequestHandler):
         last = messages[-1] if messages else None
         return {
             "id": conversation.get("id"),
+            "kind": conversation.get("kind", "market"),
             "product_id": conversation.get("product_id"),
             "product_name": product.get("name", "商品已删除") if product else "商品已删除",
             "product_status": product.get("status", "off_shelf") if product else "off_shelf",
